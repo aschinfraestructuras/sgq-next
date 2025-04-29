@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import {
-  TreeView,
-  TreeItem,
-} from '@mui/x-tree-view';
+import TreeView from '@mui/lab/TreeView';
+import TreeItem from '@mui/lab/TreeItem';
 import {
   Box,
   Typography,

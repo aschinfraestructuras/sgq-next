@@ -5,186 +5,132 @@ import {
   CardBody,
   Typography,
 } from "@material-tailwind/react";
-import {
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
-  CurrencyDollarIcon,
-  ScaleIcon,
-  ChartBarIcon,
-  ClockIcon,
-} from '@heroicons/react/24/outline';
-
-interface MaterialStats {
-  totalCost: number;
-  total: number;
-  valorTotal: number;
-  quantidadeTotal: number;
-  movimentacoes: Array<{
-    data: string;
-    tipo: string;
-    quantidade: number;
-    material: string;
-  }>;
-  consumoMedioMensal: Array<{
-    mes: string;
-    consumo: number;
-  }>;
-}
+import type { MaterialStats } from '@/types/materials';
+import { formatCurrency, formatNumber } from '@/utils/format';
 
 interface MaterialDashboardProps {
   stats: MaterialStats;
 }
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  }).format(value);
-};
-
-const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat('pt-BR').format(date);
-};
-
 const baseProps = {
   placeholder: "",
   onPointerEnterCapture: () => {},
   onPointerLeaveCapture: () => {},
+  crossOrigin: undefined as any,
 };
 
 export default function MaterialDashboard({ stats }: MaterialDashboardProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <Card {...baseProps} className="w-full" shadow={false} variant="filled">
-        <CardBody {...baseProps} className="flex items-center gap-4">
-          <div className="rounded-full p-3 bg-blue-100">
-            <CurrencyDollarIcon className="h-6 w-6 text-blue-700" />
-          </div>
-          <div>
-            <Typography {...baseProps} className="mb-1" variant="h6" color="blue-gray">
-              Custo Total
-            </Typography>
-            <Typography {...baseProps} className="font-normal" variant="h4">
-              {formatCurrency(stats.totalCost)}
-            </Typography>
-          </div>
-        </CardBody>
-      </Card>
-
-      <Card {...baseProps} className="w-full" shadow={false} variant="filled">
-        <CardBody {...baseProps} className="flex items-center gap-4">
-          <div className="rounded-full p-3 bg-blue-100">
-            <ChartBarIcon className="h-6 w-6 text-blue-700" />
-          </div>
-          <div>
-            <Typography {...baseProps} className="mb-1" variant="h6" color="blue-gray">
-              Total de Materiais
-            </Typography>
-            <Typography {...baseProps} className="font-normal" variant="h4">
-              {stats.total}
-            </Typography>
-          </div>
-        </CardBody>
-      </Card>
-
-      <Card {...baseProps} className="w-full" shadow={false} variant="filled">
-        <CardBody {...baseProps} className="flex items-center gap-4">
-          <div className="rounded-full p-3 bg-green-100">
-            <CurrencyDollarIcon className="h-6 w-6 text-green-700" />
-          </div>
-          <div>
-            <Typography {...baseProps} className="mb-1" variant="h6" color="blue-gray">
-              Valor Total
-            </Typography>
-            <Typography {...baseProps} className="font-normal" variant="h4">
-              {formatCurrency(stats.valorTotal)}
-            </Typography>
-          </div>
-        </CardBody>
-      </Card>
-
-      <Card {...baseProps} className="w-full" shadow={false} variant="filled">
-        <CardBody {...baseProps} className="flex items-center gap-4">
-          <div className="rounded-full p-3 bg-purple-100">
-            <ScaleIcon className="h-6 w-6 text-purple-700" />
-          </div>
-          <div>
-            <Typography {...baseProps} className="mb-1" variant="h6" color="blue-gray">
-              Quantidade Total
-            </Typography>
-            <Typography {...baseProps} className="font-normal" variant="h4">
-              {stats.quantidadeTotal}
-            </Typography>
-          </div>
-        </CardBody>
-      </Card>
-
-      <Card {...baseProps} className="lg:col-span-2 w-full" shadow={false} variant="filled">
-        <CardHeader {...baseProps} variant="gradient" color="blue" className="p-4">
-          <Typography {...baseProps} variant="h6" color="white" className="font-normal">
-            Últimas Movimentações
-          </Typography>
+    <div className="mb-6 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
+      <Card {...baseProps}>
+        <CardHeader {...baseProps}
+          variant="gradient"
+          color="blue"
+          className="absolute -mt-4 grid h-16 w-16 place-items-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="h-6 w-6 text-white"
+          >
+            <path d="M2.25 2.25a.75.75 0 000 1.5h1.386c.17 0 .318.114.362.278l2.558 9.592a3.752 3.752 0 00-2.806 3.63c0 .414.336.75.75.75h15.75a.75.75 0 000-1.5H5.378A2.25 2.25 0 017.5 15h11.218a.75.75 0 00.674-.421 60.358 60.358 0 002.96-7.228.75.75 0 00-.525-.965A60.864 60.864 0 005.68 4.509l-.232-.867A1.875 1.875 0 003.636 2.25H2.25zM3.75 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zM16.5 20.25a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+          </svg>
         </CardHeader>
-        <CardBody {...baseProps} className="px-0 pt-0">
-          <div className="flow-root">
-            <ul role="list" className="divide-y divide-gray-200">
-              {stats.movimentacoes.map((movimento, index) => (
-                <li key={index} className="py-4 px-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
-                      {movimento.tipo === 'entrada' ? (
-                        <ArrowTrendingUpIcon className="h-6 w-6 text-green-500" />
-                      ) : (
-                        <ArrowTrendingDownIcon className="h-6 w-6 text-red-500" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-gray-900">
-                        {movimento.material}
-                      </p>
-                      <p className="truncate text-sm text-gray-500">
-                        Quantidade: {movimento.quantidade}
-                      </p>
-                    </div>
-                    <div className="whitespace-nowrap text-right text-sm text-gray-500">
-                      {formatDate(new Date(movimento.data))}
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <CardBody {...baseProps} className="p-4 text-right">
+          <Typography {...baseProps} variant="small" className="font-normal text-blue-gray-600">
+            Total de Materiais
+          </Typography>
+          <Typography {...baseProps} variant="h4" color="blue-gray">
+            {stats.total}
+          </Typography>
         </CardBody>
       </Card>
 
-      <Card {...baseProps} className="w-full" shadow={false} variant="filled">
-        <CardHeader {...baseProps} variant="gradient" color="green" className="p-4">
-          <Typography {...baseProps} variant="h6" color="white" className="font-normal">
-            Consumo Médio Mensal
-          </Typography>
+      <Card {...baseProps}>
+        <CardHeader {...baseProps}
+          variant="gradient"
+          color="green"
+          className="absolute -mt-4 grid h-16 w-16 place-items-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="h-6 w-6 text-white"
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.625 1.5H9a3.75 3.75 0 013.75 3.75v1.875c0 1.036.84 1.875 1.875 1.875H16.5a3.75 3.75 0 013.75 3.75v7.875c0 1.035-.84 1.875-1.875 1.875H5.625a1.875 1.875 0 01-1.875-1.875V3.375c0-1.036.84-1.875 1.875-1.875zM9.75 17.25a.75.75 0 00-1.5 0V18a.75.75 0 001.5 0v-.75zm2.25-3a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0v-3a.75.75 0 01.75-.75zm3.75-1.5a.75.75 0 00-1.5 0V18a.75.75 0 001.5 0v-5.25z"
+              clipRule="evenodd"
+            />
+          </svg>
         </CardHeader>
-        <CardBody {...baseProps} className="px-0 pt-0">
-          <div className="flow-root">
-            <ul role="list" className="divide-y divide-gray-200">
-              {stats.consumoMedioMensal.map((item, index) => (
-                <li key={index} className="py-4 px-4">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex-shrink-0">
-                      <ClockIcon className="h-6 w-6 text-blue-500" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-gray-900">
-                        {item.mes}
-                      </p>
-                    </div>
-                    <div className="whitespace-nowrap text-right text-sm text-gray-500">
-                      {item.consumo} unidades
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <CardBody {...baseProps} className="p-4 text-right">
+          <Typography {...baseProps} variant="small" className="font-normal text-blue-gray-600">
+            Valor Total em Estoque
+          </Typography>
+          <Typography {...baseProps} variant="h4" color="blue-gray">
+            {formatCurrency(stats.totalValue)}
+          </Typography>
+        </CardBody>
+      </Card>
+
+      <Card {...baseProps}>
+        <CardHeader {...baseProps}
+          variant="gradient"
+          color="orange"
+          className="absolute -mt-4 grid h-16 w-16 place-items-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="h-6 w-6 text-white"
+          >
+            <path
+              fillRule="evenodd"
+              d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </CardHeader>
+        <CardBody {...baseProps} className="p-4 text-right">
+          <Typography {...baseProps} variant="small" className="font-normal text-blue-gray-600">
+            Materiais com Estoque Baixo
+          </Typography>
+          <Typography {...baseProps} variant="h4" color="blue-gray">
+            {stats.lowStock}
+          </Typography>
+        </CardBody>
+      </Card>
+
+      <Card {...baseProps}>
+        <CardHeader {...baseProps}
+          variant="gradient"
+          color="pink"
+          className="absolute -mt-4 grid h-16 w-16 place-items-center"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="h-6 w-6 text-white"
+          >
+            <path
+              fillRule="evenodd"
+              d="M2.25 2.25a.75.75 0 000 1.5H3v10.5a3 3 0 003 3h1.21l-1.172 3.513a.75.75 0 001.424.474l.329-.987h8.418l.33.987a.75.75 0 001.422-.474l-1.17-3.513H18a3 3 0 003-3V3.75h.75a.75.75 0 000-1.5H2.25zm6.04 16.5l.5-1.5h6.42l.5 1.5H8.29zm7.46-12a.75.75 0 00-1.5 0v6a.75.75 0 001.5 0v-6zm-3 2.25a.75.75 0 00-1.5 0v3.75a.75.75 0 001.5 0V9zm-3 2.25a.75.75 0 00-1.5 0v1.5a.75.75 0 001.5 0v-1.5z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </CardHeader>
+        <CardBody {...baseProps} className="p-4 text-right">
+          <Typography {...baseProps} variant="small" className="font-normal text-blue-gray-600">
+            Testes Pendentes
+          </Typography>
+          <Typography {...baseProps} variant="h4" color="blue-gray">
+            {stats.withPendingTests}
+          </Typography>
         </CardBody>
       </Card>
     </div>

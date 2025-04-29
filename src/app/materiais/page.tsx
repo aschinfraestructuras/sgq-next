@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import MaterialDashboard from '@/components/materials/MaterialDashboard';
 import { getMaterials, getMaterialStats } from '@/services/materials';
-import type { Material, MaterialStats } from '@/types/material';
+import type { Material, MaterialStats, MaterialCategoryType, MaterialStatus } from '@/types/materials';
 import {
   Card,
   Typography,
@@ -90,11 +90,31 @@ const mockStats: DashboardStats = {
 
 export default function MaterialsPage() {
   const [materials, setMaterials] = useState<Material[]>([]);
-  const [stats, setStats] = useState<DashboardStats>(mockStats);
+  const [stats, setStats] = useState<MaterialStats>({
+    total: 0,
+    byCategory: {} as Record<MaterialCategoryType, number>,
+    byStatus: {} as Record<MaterialStatus, number>,
+    lowStock: 0,
+    withPendingTests: 0,
+    withExpiringCertifications: 0,
+    totalValue: 0,
+    stockTurnover: 0,
+    averageLeadTime: 0,
+    inStock: 0,
+    turnoverRate: 0,
+    categoryBreakdown: [],
+    recentMovements: [],
+    qualityMetrics: {
+      testsPassed: 0,
+      testsFailed: 0,
+      pendingTests: 0,
+      rejectionRate: 0
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('todos');
-  const [selectedCategory, setSelectedCategory] = useState('todas');
+  const [selectedStatus, setSelectedStatus] = useState<MaterialStatus>('active');
+  const [selectedCategory, setSelectedCategory] = useState<MaterialCategoryType>('raw');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -111,19 +131,21 @@ export default function MaterialsPage() {
       setMaterials(materialsData);
       
       // Adaptar os dados do backend para o formato do dashboard
-      const adaptedStats: DashboardStats = {
-        ...statsData,
-        totalCost: statsData.valorTotal,
-        movimentacoes: (statsData.ultimasMovimentacoes || []).map(m => ({
-          ...m,
-          material: materialsData.find(mat => 
-            mat.historico?.some(h => 
-              h.data === m.data && h.tipo === m.tipo && h.quantidade === m.quantidade
-            )
-          )?.nome || 'Material'
-        })),
-        consumoMedioMensal: [{ mes: 'Total', consumo: statsData.mediaConsumoMensal }],
-        porCategoria: statsData.porCategoria || {},
+      const adaptedStats: MaterialStats = {
+        total: statsData.total,
+        byCategory: statsData.byCategory,
+        byStatus: statsData.byStatus,
+        lowStock: statsData.lowStock,
+        withPendingTests: statsData.withPendingTests,
+        withExpiringCertifications: statsData.withExpiringCertifications,
+        totalValue: statsData.totalValue,
+        stockTurnover: statsData.stockTurnover,
+        averageLeadTime: statsData.averageLeadTime,
+        inStock: statsData.inStock,
+        turnoverRate: statsData.turnoverRate,
+        categoryBreakdown: statsData.categoryBreakdown,
+        recentMovements: statsData.recentMovements,
+        qualityMetrics: statsData.qualityMetrics
       };
 
       setStats(adaptedStats);
@@ -135,10 +157,10 @@ export default function MaterialsPage() {
   };
 
   const filteredMaterials = materials.filter(material => {
-    const matchesSearch = material.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         material.codigo.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = selectedStatus === 'todos' || material.status === selectedStatus;
-    const matchesCategory = selectedCategory === 'todas' || material.categoria === selectedCategory;
+    const matchesSearch = material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         material.code.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = selectedStatus === 'active' || material.status === selectedStatus;
+    const matchesCategory = selectedCategory === 'raw' || material.category.type === selectedCategory;
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
@@ -195,22 +217,21 @@ export default function MaterialsPage() {
           {...baseProps}
           label="Status"
           value={selectedStatus}
-          onChange={(value) => setSelectedStatus(value || 'todos')}
+          onChange={(value) => setSelectedStatus(value as MaterialStatus)}
         >
-          <Option value="todos">Todos</Option>
-          <Option value="ativo">Ativo</Option>
-          <Option value="inativo">Inativo</Option>
-          <Option value="em_analise">Em Análise</Option>
+          <Option value="active">Ativo</Option>
+          <Option value="inactive">Inativo</Option>
+          <Option value="pending">Em Análise</Option>
         </Select>
         <Select
           {...baseProps}
           label="Categoria"
           value={selectedCategory}
-          onChange={(value) => setSelectedCategory(value || 'todas')}
+          onChange={(value) => setSelectedCategory(value as MaterialCategoryType)}
         >
-          <Option value="todas">Todas</Option>
-          <Option value="Materiais de Construção">Materiais de Construção</Option>
-          <Option value="Acabamentos">Acabamentos</Option>
+          <Option value="raw">Todas</Option>
+          <Option value="construction">Materiais de Construção</Option>
+          <Option value="finishing">Acabamentos</Option>
         </Select>
       </div>
 
@@ -238,17 +259,17 @@ export default function MaterialsPage() {
               <tr key={material.id} className="even:bg-blue-gray-50/50">
                 <td className="p-4">
                   <Typography {...baseProps} variant="small" color="blue-gray" className="font-normal">
-                    {material.codigo}
+                    {material.code}
                   </Typography>
                 </td>
                 <td className="p-4">
                   <Typography {...baseProps} variant="small" color="blue-gray" className="font-normal">
-                    {material.nome}
+                    {material.name}
                   </Typography>
                 </td>
                 <td className="p-4">
                   <Typography {...baseProps} variant="small" color="blue-gray" className="font-normal">
-                    {material.categoria}
+                    {material.category.type}
                   </Typography>
                 </td>
                 <td className="p-4">
@@ -258,11 +279,11 @@ export default function MaterialsPage() {
                 </td>
                 <td className="p-4">
                   <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    material.status === 'ativo' ? 'bg-green-100 text-green-800' :
-                    material.status === 'inativo' ? 'bg-red-100 text-red-800' :
+                    material.status === 'active' ? 'bg-green-100 text-green-800' :
+                    material.status === 'inactive' ? 'bg-red-100 text-red-800' :
                     'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {material.status === 'em_analise' ? 'Em Análise' : 
+                    {material.status === 'pending' ? 'Em Análise' : 
                      material.status.charAt(0).toUpperCase() + material.status.slice(1)}
                   </div>
                 </td>
