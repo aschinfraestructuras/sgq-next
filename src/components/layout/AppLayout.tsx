@@ -80,7 +80,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     </li>
                     <li>
                       <span className="text-gray-900 dark:text-white font-medium">
-                        {pathname.split('/').pop()?.charAt(0).toUpperCase() + pathname.split('/').pop()?.slice(1)}
+                        {pathname?.split('/')?.pop()?.charAt(0)?.toUpperCase() ?? '' + (pathname?.split('/')?.pop()?.slice(1) ?? '')}
                       </span>
                     </li>
                   </ol>
