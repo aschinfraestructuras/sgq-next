@@ -5,6 +5,9 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import type { User } from '@/types';
 import { login, logout, register, updateUserProfile } from '@/services/auth';
+import { useContext } from 'react';
+import { AuthContext } from '@/context/AuthContext';
+import { FirebaseError } from 'firebase/app';
 
 interface AuthState {
   user: User | null;
@@ -104,4 +107,60 @@ if (typeof window !== 'undefined') {
       });
     }
   });
+}
+
+export function useAuthContext() {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+
+  const handleAuthError = (error: unknown): never => {
+    if (error instanceof FirebaseError) {
+      throw new Error(error.message);
+    }
+    throw new Error('An unexpected error occurred');
+  };
+
+  const login = async (email: string, password: string) => {
+    try {
+      await context.login(email, password);
+    } catch (error: unknown) {
+      handleAuthError(error);
+    }
+  };
+
+  const register = async (email: string, password: string) => {
+    try {
+      await context.register(email, password);
+    } catch (error: unknown) {
+      handleAuthError(error);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await context.logout();
+    } catch (error: unknown) {
+      handleAuthError(error);
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      await context.resetPassword(email);
+    } catch (error: unknown) {
+      handleAuthError(error);
+    }
+  };
+
+  return {
+    user: context.user,
+    loading: context.loading,
+    login,
+    register,
+    logout,
+    resetPassword
+  };
 }

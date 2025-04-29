@@ -1,4 +1,4 @@
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebase/config';
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -9,6 +9,7 @@ import {
   User as FirebaseUser
 } from 'firebase/auth';
 import type { User } from '@/types';
+import { FirebaseError } from 'firebase/app';
 
 const mapFirebaseUserToUser = (firebaseUser: FirebaseUser): User => ({
   id: firebaseUser.uid,
@@ -21,80 +22,61 @@ const mapFirebaseUserToUser = (firebaseUser: FirebaseUser): User => ({
   avatar: firebaseUser.photoURL || undefined
 });
 
-export async function getCurrentUser(): Promise<User | null> {
-  return new Promise((resolve) => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      unsubscribe();
-      if (!firebaseUser) {
-        resolve(null);
-        return;
-      }
-      resolve(mapFirebaseUserToUser(firebaseUser));
-    });
-  });
+export function getCurrentUser(): FirebaseUser | null {
+  return auth.currentUser;
 }
 
-export async function login(email: string, password: string): Promise<User> {
+export async function login(email: string, password: string): Promise<void> {
   try {
-    const result = await signInWithEmailAndPassword(auth, email, password);
-    return mapFirebaseUserToUser(result.user);
-  } catch (error: any) {
-    throw new Error(error.message);
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      throw new Error(error.message);
+    }
+    throw new Error('Failed to login');
   }
 }
 
-export async function register(email: string, password: string, name: string): Promise<User> {
+export async function register(email: string, password: string): Promise<void> {
   try {
-    const result = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(result.user, { displayName: name });
-    return {
-      id: result.user.uid,
-      email: result.user.email || '',
-      name: name,
-      role: 'user',
-      active: true,
-      createdAt: new Date(),
-      lastLogin: new Date(),
-      avatar: result.user.photoURL || undefined
-    };
-  } catch (error: any) {
-    throw new Error(error.message);
+    await createUserWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      throw new Error(error.message);
+    }
+    throw new Error('Failed to register');
   }
 }
 
 export async function logout(): Promise<void> {
   try {
     await signOut(auth);
-  } catch (error: any) {
-    throw new Error(error.message);
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      throw new Error(error.message);
+    }
+    throw new Error('Failed to logout');
   }
 }
 
-export async function updateUserProfile(data: Partial<User>): Promise<User> {
-  if (!auth.currentUser) throw new Error('No user logged in');
-
+export async function updateUserProfile(user: FirebaseUser, data: { displayName?: string; photoURL?: string }): Promise<void> {
   try {
-    await updateProfile(auth.currentUser, {
-      displayName: data.name,
-      photoURL: data.avatar
-    });
-
-    const currentUser = await getCurrentUser();
-    if (!currentUser) throw new Error('Failed to get updated user');
-    
-    return {
-      ...currentUser,
-      ...data
-    };
-  } catch (error: any) {
-    throw new Error(error.message);
+    await updateProfile(user, data);
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      throw new Error(error.message);
+    }
+    throw new Error('Failed to update profile');
   }
 }
 
-export async function requestPasswordReset(email: string): Promise<void> {
+export async function resetPassword(email: string): Promise<void> {
   try {
     await sendPasswordResetEmail(auth, email);
-  } catch (error: any) {
-    throw new Error(error.message);
+  } catch (error) {
+    if (error instanceof FirebaseError) {
+      throw new Error(error.message);
+    }
+    throw new Error('Failed to send password reset email');
   }
 } 

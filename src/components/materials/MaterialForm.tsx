@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useLanguage } from '@/context/LanguageContext';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Material, MaterialCategory, MaterialStatus, MaterialUnit } from '@/types/materials';
 import { getCategories } from '@/services/materialCategories';
@@ -10,8 +9,6 @@ import {
   CubeIcon,
   CheckCircleIcon,
   ScaleIcon,
-  MapPinIcon,
-  BuildingOfficeIcon,
   ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import { Autocomplete, TextField, Tooltip } from '@mui/material';
@@ -58,8 +55,7 @@ const FormField: React.FC<FormFieldProps> = ({
   </div>
 );
 
-export default function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps) {
-  const { language } = useLanguage();
+export function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps) {
   const { t } = useTranslation();
   const [categories, setCategories] = useState<MaterialCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,7 +91,7 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
       const data = await getCategories();
       setCategories(data);
     } catch (error) {
-      console.error('Error loading categories:', error);
+      console.error('Error loading categories:', error instanceof Error ? error.message : 'Unknown error');
       toast.error(t('materials.messages.errorLoadingCategories'));
     } finally {
       setLoading(false);
@@ -108,7 +104,7 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
       await onSubmit(data);
       toast.success(t('materials.messages.saveSuccess'));
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error('Error submitting form:', error instanceof Error ? error.message : 'Unknown error');
       setSubmitError(t('materials.messages.errorSaving'));
       toast.error(t('materials.messages.errorSaving'));
     }

@@ -12,6 +12,13 @@ interface DashboardChartProps {
   subtitle?: string;
 }
 
+interface TooltipParam {
+  axisValue: string;
+  color: string;
+  seriesName: string;
+  value: number;
+}
+
 export default function DashboardChart({ 
   data, 
   title, 
@@ -71,9 +78,9 @@ export default function DashboardChart({
           color: '#1F2937'
         },
         extraCssText: 'box-shadow: 0 2px 4px rgba(0,0,0,0.1);border-radius: 6px;',
-        formatter: (params: any) => {
+        formatter: (params: TooltipParam[]) => {
           let result = `<div class="font-medium">${params[0].axisValue}</div>`;
-          params.forEach((param: any) => {
+          params.forEach((param) => {
             result += `
               <div class="flex items-center mt-2">
                 <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background-color:${param.color};margin-right:6px;"></span>
