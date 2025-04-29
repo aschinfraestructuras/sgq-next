@@ -61,7 +61,11 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
       unit: 'unit',
       minStock: 0,
       currentStock: 0,
-      specifications: [],
+      specifications: {
+        technical: {},
+        quality: {},
+        storage: {}
+      },
       suppliers: [],
       documents: [],
       tests: [],
