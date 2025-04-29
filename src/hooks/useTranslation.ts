@@ -10,22 +10,28 @@ const translations = {
 type TranslationsType = typeof translations;
 export type Language = keyof TranslationsType;
 
-type PathsToStringProps<T> = T extends string 
-  ? [] 
-  : { [K in keyof T]: [K, ...PathsToStringProps<T[K]>] }[keyof T];
+type PathsToStringProps<T> = T extends string | number
+  ? []
+  : T extends object
+    ? { [K in keyof T]: [K, ...PathsToStringProps<T[K]>] }[keyof T]
+    : never;
 
-type Join<T> = T extends []
+type Join<T extends any[]> = T extends []
   ? never
-  : T extends [string]
-    ? T[0]
-    : T extends [string, ...infer Rest]
-      ? `${T[0]}.${Join<Rest>}`
-      : never;
+  : T extends [infer Only]
+    ? Only
+    : T extends [infer First, ...infer Rest]
+      ? First extends string | number
+        ? Rest extends (string | number)[]
+          ? `${First}.${Join<Rest>}`
+          : never
+        : never
+      : string;
 
-type TranslationKeys = Join<PathsToStringProps<TranslationsType[Language]>>;
+export type TranslationKeys = Join<PathsToStringProps<TranslationsType[Language]>>;
 
 export function useTranslation(language: Language = 'pt') {
-  const t = useCallback((key: TranslationKeys): string => {
+  const t = useCallback((key: TranslationKeys | string): string => {
     const keys = key.split('.');
     let current: any = translations[language];
     
