@@ -10,16 +10,16 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
     // Redirect to login if not authenticated
-    if (!isLoading && !isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, loading, router]);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <div className="h-32 w-32 animate-spin rounded-full border-b-2 border-gray-900"></div>
