@@ -2,17 +2,18 @@
 
 import { create } from 'zustand';
 import { 
-  User as FirebaseUser,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
   updateProfile,
   onAuthStateChanged
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebase/config';
+import { User } from '@/types/firebase';
+import { handleFirebaseError } from '@/lib/firebase/utils';
 
 interface AuthState {
-  user: FirebaseUser | null;
+  user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
@@ -34,8 +35,8 @@ export const useAuth = create<AuthState>((set) => ({
     try {
       set({ loading: true, error: null });
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      set({ error: (error as Error).message });
+    } catch (error: any) {
+      set({ error: handleFirebaseError(error) });
     } finally {
       set({ loading: false });
     }
@@ -46,8 +47,8 @@ export const useAuth = create<AuthState>((set) => ({
       set({ loading: true, error: null });
       const { user } = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(user, { displayName: name });
-    } catch (error) {
-      set({ error: (error as Error).message });
+    } catch (error: any) {
+      set({ error: handleFirebaseError(error) });
     } finally {
       set({ loading: false });
     }
@@ -57,8 +58,8 @@ export const useAuth = create<AuthState>((set) => ({
     try {
       set({ loading: true, error: null });
       await signOut(auth);
-    } catch (error) {
-      set({ error: (error as Error).message });
+    } catch (error: any) {
+      set({ error: handleFirebaseError(error) });
     } finally {
       set({ loading: false });
     }
@@ -70,10 +71,10 @@ export const useAuth = create<AuthState>((set) => ({
       const currentUser = auth.currentUser;
       if (currentUser) {
         await updateProfile(currentUser, { displayName });
-        set({ user: auth.currentUser });
+        set({ user: auth.currentUser as User });
       }
-    } catch (error) {
-      set({ error: (error as Error).message });
+    } catch (error: any) {
+      set({ error: handleFirebaseError(error) });
     } finally {
       set({ loading: false });
     }
@@ -87,7 +88,7 @@ export const useAuth = create<AuthState>((set) => ({
 if (typeof window !== 'undefined') {
   onAuthStateChanged(auth, (user) => {
     useAuth.setState({ 
-      user,
+      user: user as User | null,
       isAuthenticated: !!user,
       loading: false
     });
