@@ -15,6 +15,7 @@ import {
   ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import { Autocomplete, TextField, Tooltip } from '@mui/material';
+import { toast } from 'react-hot-toast';
 
 interface MaterialFormProps {
   material?: Partial<Material>;
@@ -62,6 +63,7 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
   const { t } = useTranslation();
   const [categories, setCategories] = useState<MaterialCategory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   
   const defaultValues: Partial<Material> = {
     status: 'pending',
@@ -71,26 +73,16 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
     maxStock: 0,
     reorderPoint: 0,
     leadTime: 0,
-    specifications: {
-      technical: {},
-      quality: {},
-      storage: {}
-    },
     suppliers: [],
-    batches: [],
-    inventory: {
-      locations: [],
-      movements: []
-    },
-    documents: [],
     tests: [],
-    certifications: [],
+    history: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
   
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<Partial<Material>>({
-    defaultValues: material || defaultValues
+    defaultValues: material || defaultValues,
+    mode: 'onChange'
   });
 
   useEffect(() => {
@@ -104,16 +96,56 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
       setCategories(data);
     } catch (error) {
       console.error('Error loading categories:', error);
+      toast.error(t('materials.messages.errorLoadingCategories'));
     } finally {
       setLoading(false);
     }
   };
 
+  const handleFormSubmit = async (data: Partial<Material>) => {
+    try {
+      setSubmitError(null);
+      await onSubmit(data);
+      toast.success(t('materials.messages.saveSuccess'));
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setSubmitError(t('materials.messages.errorSaving'));
+      toast.error(t('materials.messages.errorSaving'));
+    }
+  };
+
   const selectedCategory = watch('category');
   const currentStock = watch('currentStock') || 0;
+  const minStock = watch('minStock') || 0;
+  const maxStock = watch('maxStock') || 0;
+
+  // Validation rules
+  const stockValidation = {
+    min: { value: 0, message: t('materials.validation.stockMin') },
+    validate: (value: number | undefined) => {
+      if (value === undefined) return true;
+      if (maxStock && value > maxStock) return t('materials.validation.stockMaxExceeded');
+      if (minStock && value < minStock) return t('materials.validation.stockBelowMin');
+      return true;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
+      {submitError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <p className="text-red-600">{submitError}</p>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Código */}
@@ -125,7 +157,13 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
           >
             <input
               type="text"
-              {...register('code', { required: 'Código é obrigatório' })}
+              {...register('code', { 
+                required: t('materials.validation.codeRequired'),
+                pattern: {
+                  value: /^[A-Z0-9-]+$/,
+                  message: t('materials.validation.codeFormat')
+                }
+              })}
               className="input"
               placeholder="Ex: MAT-001"
               disabled={!!material}
@@ -141,7 +179,13 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
           >
             <input
               type="text"
-              {...register('name', { required: 'Nome é obrigatório' })}
+              {...register('name', { 
+                required: t('materials.validation.nameRequired'),
+                minLength: {
+                  value: 3,
+                  message: t('materials.validation.nameMinLength')
+                }
+              })}
               className="input"
               placeholder="Ex: Aço Inoxidável 304"
             />
@@ -155,7 +199,12 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
               icon={DocumentTextIcon}
             >
               <textarea
-                {...register('description')}
+                {...register('description', {
+                  maxLength: {
+                    value: 500,
+                    message: t('materials.validation.descriptionMaxLength')
+                  }
+                })}
                 rows={3}
                 className="input resize-none"
                 placeholder="Descreva o material..."
@@ -208,7 +257,7 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
             required
           >
             <select
-              {...register('status', { required: 'Status é obrigatório' })}
+              {...register('status', { required: t('materials.validation.statusRequired') })}
               className="input"
             >
               {statuses.map((status) => (
@@ -227,7 +276,7 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
             required
           >
             <select
-              {...register('unit', { required: 'Unidade é obrigatória' })}
+              {...register('unit', { required: t('materials.validation.unitRequired') })}
               className="input"
             >
               {units.map((unit) => (
@@ -242,17 +291,15 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
           <FormField 
             label={t('materials.form.currentStock')} 
             error={errors.currentStock?.message}
-            icon={ScaleIcon}
+            icon={CubeIcon}
             required
           >
             <input
               type="number"
-              {...register('currentStock', { 
-                required: 'Quantidade é obrigatória',
-                min: { value: 0, message: 'Deve ser maior ou igual a 0' }
-              })}
+              {...register('currentStock', stockValidation)}
               className="input"
-              placeholder="0"
+              min={0}
+              step="0.01"
             />
           </FormField>
 
@@ -260,17 +307,17 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
           <FormField 
             label={t('materials.form.minStock')} 
             error={errors.minStock?.message}
-            icon={ScaleIcon}
+            icon={CubeIcon}
             required
           >
             <input
               type="number"
-              {...register('minStock', { 
-                required: 'Estoque mínimo é obrigatório',
-                min: { value: 0, message: 'Deve ser maior ou igual a 0' }
+              {...register('minStock', {
+                min: { value: 0, message: t('materials.validation.minStockMin') }
               })}
               className="input"
-              placeholder="0"
+              min={0}
+              step="0.01"
             />
           </FormField>
 
@@ -278,17 +325,17 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
           <FormField 
             label={t('materials.form.maxStock')} 
             error={errors.maxStock?.message}
-            icon={ScaleIcon}
+            icon={CubeIcon}
             required
           >
             <input
               type="number"
-              {...register('maxStock', { 
-                required: 'Estoque máximo é obrigatório',
-                min: { value: 0, message: 'Deve ser maior ou igual a 0' }
+              {...register('maxStock', {
+                min: { value: 0, message: t('materials.validation.maxStockMin') }
               })}
               className="input"
-              placeholder="0"
+              min={0}
+              step="0.01"
             />
           </FormField>
 
@@ -302,11 +349,12 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
             <input
               type="number"
               {...register('reorderPoint', { 
-                required: 'Ponto de reposição é obrigatório',
-                min: { value: 0, message: 'Deve ser maior ou igual a 0' }
+                required: t('materials.validation.reorderPointRequired'),
+                min: { value: 0, message: t('materials.validation.reorderPointMin') }
               })}
               className="input"
-              placeholder="0"
+              min={0}
+              step="0.01"
             />
           </FormField>
 
@@ -320,11 +368,12 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
             <input
               type="number"
               {...register('leadTime', { 
-                required: 'Lead time é obrigatório',
-                min: { value: 0, message: 'Deve ser maior ou igual a 0' }
+                required: t('materials.validation.leadTimeRequired'),
+                min: { value: 0, message: t('materials.validation.leadTimeMin') }
               })}
               className="input"
-              placeholder="0"
+              min={0}
+              step="0.01"
             />
           </FormField>
         </div>
@@ -334,14 +383,15 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-800 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          className="btn btn-secondary"
+          disabled={isSubmitting}
         >
           {t('common.cancel')}
         </button>
         <button
           type="submit"
+          className="btn btn-primary"
           disabled={isSubmitting}
-          className="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md shadow-sm hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
         >
           {isSubmitting ? t('common.saving') : t('common.save')}
         </button>

@@ -48,6 +48,24 @@
       "saving": "Salvando...",
       "cancel": "Cancelar"
     },
+    "validation": {
+      "codeRequired": "Código é obrigatório",
+      "codeFormat": "Código deve conter apenas letras maiúsculas, números e hífen",
+      "nameRequired": "Nome é obrigatório",
+      "nameMinLength": "Nome deve ter pelo menos 3 caracteres",
+      "descriptionMaxLength": "Descrição deve ter no máximo 500 caracteres",
+      "statusRequired": "Status é obrigatório",
+      "unitRequired": "Unidade é obrigatória",
+      "stockMin": "Quantidade deve ser maior ou igual a 0",
+      "stockMaxExceeded": "Quantidade não pode ser maior que o estoque máximo",
+      "stockBelowMin": "Quantidade não pode ser menor que o estoque mínimo",
+      "minStockMin": "Estoque mínimo deve ser maior ou igual a 0",
+      "maxStockMin": "Estoque máximo deve ser maior ou igual a 0",
+      "reorderPointRequired": "Ponto de reposição é obrigatório",
+      "reorderPointMin": "Ponto de reposição deve ser maior ou igual a 0",
+      "leadTimeRequired": "Lead time é obrigatório",
+      "leadTimeMin": "Lead time deve ser maior ou igual a 0"
+    },
     "table": {
       "code": "Código",
       "name": "Nome",
@@ -64,8 +82,11 @@
     "messages": {
       "confirmDelete": "Tem certeza que deseja excluir este material?",
       "errorLoading": "Erro ao carregar materiais",
+      "errorLoadingCategories": "Erro ao carregar categorias",
       "errorSaving": "Erro ao salvar material",
       "errorDeleting": "Erro ao excluir material",
+      "saveSuccess": "Material salvo com sucesso",
+      "deleteSuccess": "Material excluído com sucesso",
       "tryAgain": "Tentar novamente"
     },
     "categories": {
@@ -79,7 +100,44 @@
       "active": "Ativo",
       "inactive": "Inativo",
       "pending": "Pendente",
-      "discontinued": "Descontinuado"
+      "discontinued": "Descontinuado",
+      "lowStock": "Estoque Baixo",
+      "warningStock": "Estoque em Alerta",
+      "goodStock": "Estoque Normal"
+    },
+    "empty": {
+      "title": "Nenhum material encontrado",
+      "description": "Comece adicionando um novo material ao sistema."
+    },
+    "dashboard": {
+      "totalMaterials": "Total de Materiais",
+      "totalValue": "Valor Total em Estoque",
+      "lowStock": "Materiais com Estoque Baixo",
+      "pendingTests": "Testes Pendentes"
+    },
+    "tabs": {
+      "all": "Todos",
+      "active": "Ativos",
+      "inactive": "Inativos",
+      "allTitle": "Todos os Materiais",
+      "activeTitle": "Materiais Ativos",
+      "inactiveTitle": "Materiais Inativos"
     }
+  },
+  "common": {
+    "loading": "Carregando...",
+    "save": "Salvar",
+    "saving": "Salvando...",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "create": "Criar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "noResults": "Nenhum resultado encontrado",
+    "error": "Erro",
+    "success": "Sucesso",
+    "confirm": "Confirmar",
+    "actions": "Ações"
   }
 } 

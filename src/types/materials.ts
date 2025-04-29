@@ -2,19 +2,16 @@ export type MaterialStatus = 'active' | 'inactive' | 'pending' | 'discontinued' 
 export type MaterialCategoryType = 'raw' | 'processed' | 'packaging' | 'finished' | 'service' | 'equipment' | 'other';
 export type MaterialUnit = 'kg' | 'unit' | 'm' | 'm2' | 'm3' | 'l' | 'ml' | 'g';
 export type CertificationType = 'quality' | 'safety' | 'environmental' | 'technical' | 'other';
-export type TestStatus = 'pending' | 'in_progress' | 'passed' | 'failed';
+export type TestStatus = 'pending' | 'passed' | 'failed';
 export type BatchStatus = 'in_stock' | 'in_use' | 'consumed' | 'expired' | 'quarantine';
 
 export interface TestResults {
   parameter: string;
   value: number | string;
-  unit?: string;
   min?: number;
   max?: number;
-  expected?: string | number;
-  tolerance?: number;
-  isWithinSpec: boolean;
-  notes?: string;
+  unit?: string;
+  status: TestStatus;
 }
 
 export interface MaterialCertification {
@@ -31,19 +28,21 @@ export interface MaterialCertification {
 
 export interface MaterialTest {
   id: string;
-  materialId: string;
-  batchId?: string;
   type: string;
-  description: string;
+  name: string;
+  description?: string;
   status: TestStatus;
-  dueDate: Date;
-  completedDate?: Date;
   results: TestResults[];
-  technician?: string;
   notes?: string;
   attachments?: string[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
+}
+
+export interface MaterialTestFormData extends Omit<MaterialTest, 'id' | 'createdAt' | 'updatedAt' | 'createdBy' | 'updatedBy'> {
+  id?: string;
 }
 
 export interface MaterialBatch {
@@ -122,6 +121,7 @@ export interface Material {
   reorderPoint: number;
   cost: number;
   leadTime: number;
+  unit: MaterialUnit;
   suppliers: MaterialSupplier[];
   tests: MaterialTest[];
   history: MaterialMovement[];
@@ -193,14 +193,4 @@ export interface MaterialSupplier {
   rating: number;
   lastDelivery?: string;
   averageLeadTime: number;
-}
-
-export interface MaterialTest {
-  id: string;
-  date: string;
-  type: string;
-  status: 'pending' | 'passed' | 'failed';
-  results?: Record<string, any>;
-  responsible: string;
-  observation?: string;
 } 

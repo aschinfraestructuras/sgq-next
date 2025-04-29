@@ -5,7 +5,8 @@ import {
   ChevronUpIcon, 
   ChevronDownIcon,
   ArrowPathIcon,
-  ExclamationCircleIcon
+  ExclamationCircleIcon,
+  PlusIcon
 } from '@heroicons/react/24/outline';
 import type { Material } from '@/types/materials';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -18,16 +19,19 @@ import {
   TableHead, 
   TableRow,
   Paper,
-  Tooltip
+  Tooltip,
+  CircularProgress
 } from '@mui/material';
 
 interface MaterialListProps {
   materials: Material[];
   onEdit: (material: Material) => void;
   onDelete: (material: Material) => void;
+  onAdd?: () => void;
+  loading?: boolean;
 }
 
-export const MaterialList = ({ materials, onEdit, onDelete }: MaterialListProps) => {
+export const MaterialList = ({ materials, onEdit, onDelete, onAdd, loading }: MaterialListProps) => {
   const { t } = useTranslation();
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Material;
@@ -97,6 +101,40 @@ export const MaterialList = ({ materials, onEdit, onDelete }: MaterialListProps)
       tooltip: t('materials.status.goodStock')
     };
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow border border-gray-200">
+        <CircularProgress size={40} className="text-primary" />
+        <p className="mt-4 text-gray-600">{t('common.loading')}</p>
+      </div>
+    );
+  }
+
+  if (!materials.length) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 bg-white rounded-lg shadow border border-gray-200">
+        <div className="bg-gray-50 rounded-full p-3">
+          <ExclamationCircleIcon className="h-8 w-8 text-gray-400" />
+        </div>
+        <h3 className="mt-4 text-lg font-medium text-gray-900">
+          {t('materials.empty.title')}
+        </h3>
+        <p className="mt-1 text-sm text-gray-500">
+          {t('materials.empty.description')}
+        </p>
+        {onAdd && (
+          <button
+            onClick={onAdd}
+            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          >
+            <PlusIcon className="h-5 w-5 mr-2" />
+            {t('materials.new')}
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <TableContainer 

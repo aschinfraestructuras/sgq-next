@@ -48,6 +48,24 @@
       "saving": "Saving...",
       "cancel": "Cancel"
     },
+    "validation": {
+      "codeRequired": "Code is required",
+      "codeFormat": "Code must contain only uppercase letters, numbers and hyphen",
+      "nameRequired": "Name is required",
+      "nameMinLength": "Name must be at least 3 characters long",
+      "descriptionMaxLength": "Description must be at most 500 characters long",
+      "statusRequired": "Status is required",
+      "unitRequired": "Unit is required",
+      "stockMin": "Quantity must be greater than or equal to 0",
+      "stockMaxExceeded": "Quantity cannot be greater than maximum stock",
+      "stockBelowMin": "Quantity cannot be less than minimum stock",
+      "minStockMin": "Minimum stock must be greater than or equal to 0",
+      "maxStockMin": "Maximum stock must be greater than or equal to 0",
+      "reorderPointRequired": "Reorder point is required",
+      "reorderPointMin": "Reorder point must be greater than or equal to 0",
+      "leadTimeRequired": "Lead time is required",
+      "leadTimeMin": "Lead time must be greater than or equal to 0"
+    },
     "table": {
       "code": "Code",
       "name": "Name",
@@ -64,8 +82,11 @@
     "messages": {
       "confirmDelete": "Are you sure you want to delete this material?",
       "errorLoading": "Error loading materials",
+      "errorLoadingCategories": "Error loading categories",
       "errorSaving": "Error saving material",
       "errorDeleting": "Error deleting material",
+      "saveSuccess": "Material saved successfully",
+      "deleteSuccess": "Material deleted successfully",
       "tryAgain": "Try again"
     },
     "categories": {
@@ -79,7 +100,44 @@
       "active": "Active",
       "inactive": "Inactive",
       "pending": "Pending",
-      "discontinued": "Discontinued"
+      "discontinued": "Discontinued",
+      "lowStock": "Low Stock",
+      "warningStock": "Warning Stock",
+      "goodStock": "Good Stock"
+    },
+    "empty": {
+      "title": "No materials found",
+      "description": "Start by adding a new material to the system."
+    },
+    "dashboard": {
+      "totalMaterials": "Total Materials",
+      "totalValue": "Total Stock Value",
+      "lowStock": "Low Stock Materials",
+      "pendingTests": "Pending Tests"
+    },
+    "tabs": {
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive",
+      "allTitle": "All Materials",
+      "activeTitle": "Active Materials",
+      "inactiveTitle": "Inactive Materials"
     }
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "noResults": "No results found",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "actions": "Actions"
   }
 } 

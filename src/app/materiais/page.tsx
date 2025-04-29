@@ -1,243 +1,54 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import MaterialDashboard from '@/components/materials/MaterialDashboard';
-import { getMaterials, getMaterialStats } from '@/services/materials';
-import type { Material, MaterialStats, MaterialCategoryType, MaterialStatus } from '@/types/materials';
-import {
-  Card,
-  Typography,
-  Button,
-  IconButton,
-  Input,
-  Select,
-  Option,
-} from "@material-tailwind/react";
-import {
-  PlusIcon,
-  ArrowDownTrayIcon,
-  ChevronDownIcon,
-} from '@heroicons/react/24/outline';
-
-// Base props para os componentes do Material Tailwind
-const baseProps = {
-  placeholder: "",
-  onPointerEnterCapture: () => {},
-  onPointerLeaveCapture: () => {},
-  crossOrigin: undefined as any,
-};
+import React from 'react';
+import { MaterialForm } from '@/components/materials/MaterialForm';
+import { MaterialList } from '@/components/materials/MaterialList';
+import { MaterialDashboard } from '@/components/materials/MaterialDashboard';
+import { useMaterials } from '@/hooks/useMaterials';
+import { useTranslation } from '@/hooks/useTranslation';
+import { Tabs, TabsHeader, TabsBody, Tab, TabPanel } from "@material-tailwind/react";
 
 export default function MaterialsPage() {
-  const [materials, setMaterials] = useState<Material[]>([]);
-  const [stats, setStats] = useState<MaterialStats>({
-    total: 0,
-    byCategory: {} as Record<MaterialCategoryType, number>,
-    byStatus: {} as Record<MaterialStatus, number>,
-    lowStock: 0,
-    withPendingTests: 0,
-    withExpiringCertifications: 0,
-    totalValue: 0,
-    stockTurnover: 0,
-    averageLeadTime: 0,
-    inStock: 0,
-    turnoverRate: 0,
-    categoryBreakdown: [],
-    recentMovements: [],
-    qualityMetrics: {
-      testsPassed: 0,
-      testsFailed: 0,
-      pendingTests: 0,
-      rejectionRate: 0
-    }
-  });
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<MaterialStatus>('active');
-  const [selectedCategory, setSelectedCategory] = useState<MaterialCategoryType>('raw');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { t } = useTranslation();
+  const { materials, loading, error, stats } = useMaterials();
+  const [activeTab, setActiveTab] = React.useState("dashboard");
 
-  useEffect(() => {
-    loadMaterials();
-  }, []);
-
-  const loadMaterials = async () => {
-    try {
-      setLoading(true);
-      const [materialsData, statsData] = await Promise.all([
-        getMaterials(),
-        getMaterialStats()
-      ]);
-      setMaterials(materialsData);
-      
-      // Adaptar os dados do backend para o formato do dashboard
-      const adaptedStats: MaterialStats = {
-        total: statsData.total,
-        byCategory: statsData.byCategory,
-        byStatus: statsData.byStatus,
-        lowStock: statsData.lowStock,
-        withPendingTests: statsData.withPendingTests,
-        withExpiringCertifications: statsData.withExpiringCertifications,
-        totalValue: statsData.totalValue,
-        stockTurnover: statsData.stockTurnover,
-        averageLeadTime: statsData.averageLeadTime,
-        inStock: statsData.inStock,
-        turnoverRate: statsData.turnoverRate,
-        categoryBreakdown: statsData.categoryBreakdown,
-        recentMovements: statsData.recentMovements,
-        qualityMetrics: statsData.qualityMetrics
-      };
-
-      setStats(adaptedStats);
-    } catch (error) {
-      console.error('Error loading materials:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredMaterials = materials.filter(material => {
-    const matchesSearch = material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         material.code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = selectedStatus === 'active' || material.status === selectedStatus;
-    const matchesCategory = selectedCategory === 'raw' || material.category.type === selectedCategory;
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
-      </div>
-    );
-  }
+  const data = [
+    {
+      label: t('materials.tabs.dashboard'),
+      value: "dashboard",
+      content: <MaterialDashboard stats={stats} loading={loading} error={error} />,
+    },
+    {
+      label: t('materials.tabs.list'),
+      value: "list",
+      content: <MaterialList materials={materials} loading={loading} error={error} />,
+    },
+    {
+      label: t('materials.tabs.new'),
+      value: "new",
+      content: <MaterialForm />,
+    },
+  ];
 
   return (
-    <div className="px-6 py-8">
-      {/* Header */}
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <Typography {...baseProps} variant="h5" color="blue-gray">
-            Gestão de Materiais
-          </Typography>
-          <Typography {...baseProps} color="gray" className="mt-1 font-normal">
-            Controle e rastreamento de materiais
-          </Typography>
-        </div>
-        <div className="flex gap-4">
-          <Button {...baseProps} className="flex items-center gap-2" color="blue">
-            <ArrowDownTrayIcon className="h-4 w-4" /> Exportar
-          </Button>
-          <Button
-            {...baseProps}
-            className="flex items-center gap-2"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <PlusIcon className="h-4 w-4" /> Adicionar Material
-          </Button>
-        </div>
-      </div>
-
-      {/* Dashboard */}
-      <MaterialDashboard stats={stats} />
-
-      {/* Filtros */}
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-        <Input
-          {...baseProps}
-          label="Buscar material"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="!border-t-blue-gray-200 focus:!border-t-gray-900"
-          labelProps={{
-            className: "before:content-none after:content-none",
-          }}
-        />
-        <Select
-          {...baseProps}
-          label="Status"
-          value={selectedStatus}
-          onChange={(value) => setSelectedStatus(value as MaterialStatus)}
-        >
-          <Option value="active">Ativo</Option>
-          <Option value="inactive">Inativo</Option>
-          <Option value="pending">Em Análise</Option>
-        </Select>
-        <Select
-          {...baseProps}
-          label="Categoria"
-          value={selectedCategory}
-          onChange={(value) => setSelectedCategory(value as MaterialCategoryType)}
-        >
-          <Option value="raw">Todas</Option>
-          <Option value="construction">Materiais de Construção</Option>
-          <Option value="finishing">Acabamentos</Option>
-        </Select>
-      </div>
-
-      {/* Tabela */}
-      <Card {...baseProps} className="overflow-scroll h-full w-full">
-        <table className="w-full min-w-max table-auto text-left">
-          <thead>
-            <tr>
-              {['Código', 'Nome', 'Categoria', 'Quantidade', 'Status', 'Ações'].map((head) => (
-                <th key={head} className="border-b border-blue-gray-100 bg-blue-gray-50 p-4">
-                  <Typography
-                    {...baseProps}
-                    variant="small"
-                    color="blue-gray"
-                    className="font-normal leading-none opacity-70"
-                  >
-                    {head}
-                  </Typography>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filteredMaterials.map((material) => (
-              <tr key={material.id} className="even:bg-blue-gray-50/50">
-                <td className="p-4">
-                  <Typography {...baseProps} variant="small" color="blue-gray" className="font-normal">
-                    {material.code}
-                  </Typography>
-                </td>
-                <td className="p-4">
-                  <Typography {...baseProps} variant="small" color="blue-gray" className="font-normal">
-                    {material.name}
-                  </Typography>
-                </td>
-                <td className="p-4">
-                  <Typography {...baseProps} variant="small" color="blue-gray" className="font-normal">
-                    {material.category.type}
-                  </Typography>
-                </td>
-                <td className="p-4">
-                  <Typography {...baseProps} variant="small" color="blue-gray" className="font-normal">
-                    {material.currentStock}
-                  </Typography>
-                </td>
-                <td className="p-4">
-                  <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    material.status === 'active' ? 'bg-green-100 text-green-800' :
-                    material.status === 'inactive' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {material.status === 'pending' ? 'Em Análise' : 
-                     material.status.charAt(0).toUpperCase() + material.status.slice(1)}
-                  </div>
-                </td>
-                <td className="p-4">
-                  <div className="flex gap-2">
-                    <IconButton {...baseProps} variant="text" color="blue-gray">
-                      <ChevronDownIcon className="h-4 w-4" />
-                    </IconButton>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
+    <div className="h-full w-full p-4">
+      <Tabs value={activeTab}>
+        <TabsHeader>
+          {data.map(({ label, value }) => (
+            <Tab key={value} value={value} onClick={() => setActiveTab(value)}>
+              {label}
+            </Tab>
+          ))}
+        </TabsHeader>
+        <TabsBody>
+          {data.map(({ value, content }) => (
+            <TabPanel key={value} value={value}>
+              {content}
+            </TabPanel>
+          ))}
+        </TabsBody>
+      </Tabs>
     </div>
   );
 }
