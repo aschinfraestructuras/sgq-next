@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Material } from '@/types/material';
-import { useLanguage } from '@/hooks/useLanguage';
+import type { Material } from '@/types/materials';
 import { useTranslation } from '@/hooks/useTranslation';
 import { formatCurrency } from '@/utils/format';
-import { Table } from '@mui/material';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow,
+  Paper
+} from '@mui/material';
 
 interface MaterialListProps {
   materials: Material[];
@@ -14,7 +21,6 @@ interface MaterialListProps {
 
 export const MaterialList = ({ materials, onEdit, onDelete }: MaterialListProps) => {
   const { t } = useTranslation();
-  const { language } = useLanguage();
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Material;
     direction: 'asc' | 'desc';
@@ -44,49 +50,77 @@ export const MaterialList = ({ materials, onEdit, onDelete }: MaterialListProps)
   };
 
   return (
-    <Table>
-      <thead>
-        <tr>
-          <th onClick={() => requestSort('code')}>{t('material.code')}</th>
-          <th onClick={() => requestSort('name')}>{t('material.name')}</th>
-          <th onClick={() => requestSort('category')}>{t('material.category')}</th>
-          <th onClick={() => requestSort('unit')}>{t('material.unit')}</th>
-          <th onClick={() => requestSort('currentStock')}>{t('material.currentStock')}</th>
-          <th onClick={() => requestSort('minStock')}>{t('material.minStock')}</th>
-          <th onClick={() => requestSort('status')}>{t('material.status')}</th>
-          <th onClick={() => requestSort('unitPrice')}>{t('material.price')}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {sortedMaterials.map((material) => (
-          <tr key={material.id}>
-            <td>{material.code}</td>
-            <td>{material.name}</td>
-            <td>{t(`material.categories.${material.category}`)}</td>
-            <td>{t(`material.units.${material.unit}`)}</td>
-            <td>{material.currentStock}</td>
-            <td>{material.minStock}</td>
-            <td>{t(`material.status.${material.status}`)}</td>
-            <td>{formatCurrency(material.unitPrice)}</td>
-            <td>
-              <button
-                onClick={() => onEdit(material)}
-                className="text-primary hover:text-primary-dark mr-4"
-              >
-                <PencilIcon className="h-5 w-5" aria-hidden="true" />
-                <span className="sr-only">{t('common.edit')}</span>
-              </button>
-              <button
-                onClick={() => onDelete(material)}
-                className="text-red-600 hover:text-red-900"
-              >
-                <TrashIcon className="h-5 w-5" aria-hidden="true" />
-                <span className="sr-only">{t('common.delete')}</span>
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </Table>
+    <TableContainer component={Paper} className="shadow-md">
+      <Table>
+        <TableHead>
+          <TableRow>
+            <TableCell onClick={() => requestSort('code')} className="cursor-pointer">
+              {t('materials.table.code')}
+            </TableCell>
+            <TableCell onClick={() => requestSort('name')} className="cursor-pointer">
+              {t('materials.table.name')}
+            </TableCell>
+            <TableCell onClick={() => requestSort('category')} className="cursor-pointer">
+              {t('materials.table.category')}
+            </TableCell>
+            <TableCell onClick={() => requestSort('unit')} className="cursor-pointer">
+              {t('materials.table.unit')}
+            </TableCell>
+            <TableCell onClick={() => requestSort('currentStock')} className="cursor-pointer">
+              {t('materials.table.currentStock')}
+            </TableCell>
+            <TableCell onClick={() => requestSort('minStock')} className="cursor-pointer">
+              {t('materials.table.minStock')}
+            </TableCell>
+            <TableCell onClick={() => requestSort('status')} className="cursor-pointer">
+              {t('materials.table.status')}
+            </TableCell>
+            <TableCell align="right">
+              {t('materials.table.actions')}
+            </TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {sortedMaterials.map((material) => (
+            <TableRow 
+              key={material.id}
+              hover
+              className="hover:bg-gray-50 dark:hover:bg-gray-700"
+            >
+              <TableCell>{material.code}</TableCell>
+              <TableCell>{material.name}</TableCell>
+              <TableCell>{t(`materials.categories.${material.category}`)}</TableCell>
+              <TableCell>{material.unit.toUpperCase()}</TableCell>
+              <TableCell>{material.currentStock}</TableCell>
+              <TableCell>{material.minStock}</TableCell>
+              <TableCell>
+                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                  ${material.status === 'active' ? 'bg-green-100 text-green-800' : 
+                    material.status === 'inactive' ? 'bg-red-100 text-red-800' : 
+                    'bg-yellow-100 text-yellow-800'}`}>
+                  {t(`materials.status.${material.status}`)}
+                </span>
+              </TableCell>
+              <TableCell align="right">
+                <button
+                  onClick={() => onEdit(material)}
+                  className="text-primary hover:text-primary-dark mr-4"
+                >
+                  <PencilIcon className="h-5 w-5" aria-hidden="true" />
+                  <span className="sr-only">{t('materials.actions.edit')}</span>
+                </button>
+                <button
+                  onClick={() => onDelete(material)}
+                  className="text-red-600 hover:text-red-900"
+                >
+                  <TrashIcon className="h-5 w-5" aria-hidden="true" />
+                  <span className="sr-only">{t('materials.actions.delete')}</span>
+                </button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }; 
