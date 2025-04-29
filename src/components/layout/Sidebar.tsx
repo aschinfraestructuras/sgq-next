@@ -20,6 +20,11 @@ import {
 import { useAppState } from '@/hooks/useAppState';
 import { useAuth } from '@/hooks/useAuth';
 
+interface SidebarProps {
+  isOpen: boolean;
+  onToggle: () => void;
+}
+
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   {
@@ -47,7 +52,7 @@ const navigation = [
   { name: 'Configurações', href: '/configuracoes', icon: Cog6ToothIcon },
 ];
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
   const pathname = usePathname();
   const { sidebarOpen } = useAppState();
   const { user } = useAuth();

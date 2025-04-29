@@ -15,10 +15,10 @@ import { useAppState } from '@/hooks/useAppState';
 import { useAuth } from '@/hooks/useAuth';
 
 interface HeaderProps {
-  onMenuClick?: () => void;
+  onToggleSidebar: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   const { theme, setTheme, notifications, markNotificationAsRead } = useAppState();
   const { user, logout } = useAuth();
 
@@ -29,7 +29,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
       <div className="flex justify-between items-center px-4 py-4">
         <div className="flex items-center">
           <button
-            onClick={onMenuClick}
+            onClick={onToggleSidebar}
             className="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <Bars3Icon className="h-6 w-6" />

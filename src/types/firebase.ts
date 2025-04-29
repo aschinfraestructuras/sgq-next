@@ -1,11 +1,15 @@
-import { User as FirebaseUser } from 'firebase/auth';
+import type { User as FirebaseUser } from 'firebase/auth';
 
-// Estende o tipo User do Firebase para incluir as propriedades opcionais
-declare module 'firebase/auth' {
-  interface User extends FirebaseUser {
-    displayName: string | null;
-    photoURL: string | null;
-  }
+export interface AppUser {
+  id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'user';
+  department?: string;
+  position?: string;
+  createdAt: string;
+  updatedAt: string;
+  firebaseUser: FirebaseUser;
 }
 
-export {}; 
+export type { FirebaseUser }; 

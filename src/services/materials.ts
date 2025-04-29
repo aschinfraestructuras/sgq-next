@@ -16,7 +16,7 @@ import {
   increment,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Material, MaterialFilter, MaterialStats } from '@/types/materials';
+import type { Material, MaterialFilter, MaterialStats, MaterialMovement } from '@/types/material';
 import { addHistoryEntry } from './materialHistory';
 import { getCurrentUser } from './auth';
 
@@ -105,7 +105,7 @@ export const createMaterial = async (data: Omit<Material, 'id' | 'createdAt' | '
       ...materialData,
       createdAt: now.toDate().toISOString(),
       updatedAt: now.toDate().toISOString(),
-    };
+    } as Material;
 
     // Add history entry
     await addHistoryEntry({
@@ -146,7 +146,7 @@ export const updateMaterial = async (id: string, data: Partial<Material>): Promi
     await addHistoryEntry({
       materialId: id,
       type: 'updated',
-      previousValue: currentData,
+      previousValue: currentData as Partial<Material>,
       newValue: data,
       userId: user.id,
     });
@@ -174,7 +174,7 @@ export const deleteMaterial = async (id: string): Promise<void> => {
     await addHistoryEntry({
       materialId: id,
       type: 'deleted',
-      previousValue: currentData,
+      previousValue: currentData as Partial<Material>,
       userId: user.id,
     });
   } catch (error) {
@@ -231,51 +231,82 @@ export const updateStock = async (
 
 export async function getMaterialStats(): Promise<MaterialStats> {
   try {
-    const materialsRef = getCollectionRef();
-    const snapshot = await getDocs(materialsRef);
+    const snapshot = await getDocs(collection(db, COLLECTION));
     const materials = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Material);
 
     const stats: MaterialStats = {
       total: materials.length,
       byCategory: {} as Record<Material['category'], number>,
       byStatus: {} as Record<Material['status'], number>,
-      lowStock: 0,
-      withPendingTests: 0,
-      withExpiringCertifications: 0
+      lowStock: materials.filter(m => m.currentStock <= m.minStock).length,
+      withPendingTests: materials.filter(m => m.pendingTests > 0).length,
+      withExpiringCertifications: materials.filter(m => m.certificationExpiryDate && new Date(m.certificationExpiryDate) <= new Date()).length,
+      totalValue: materials.reduce((acc, m) => acc + (m.currentStock * m.unitPrice), 0),
+      stockTurnover: calculateStockTurnover(materials),
+      averageLeadTime: calculateAverageLeadTime(materials),
+      topSuppliers: getTopSuppliers(materials),
+      recentMovements: getRecentMovements(materials),
+      criticalItems: getCriticalItems(materials)
     };
 
+    // Calculate category counts
     materials.forEach(material => {
-      // Count by category
       stats.byCategory[material.category] = (stats.byCategory[material.category] || 0) + 1;
-      
-      // Count by status
+    });
+
+    // Calculate status counts
+    materials.forEach(material => {
       stats.byStatus[material.status] = (stats.byStatus[material.status] || 0) + 1;
-      
-      // Count low stock
-      if (material.currentStock <= material.minStock) {
-        stats.lowStock++;
-      }
-
-      // Count materials with pending tests
-      if (material.tests?.some(test => test.status === 'pending')) {
-        stats.withPendingTests++;
-      }
-
-      // Count materials with expiring certifications (within 30 days)
-      const thirtyDaysFromNow = new Date();
-      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      
-      if (material.certifications?.some(cert => {
-        const expiryDate = new Date(cert.expiryDate);
-        return expiryDate <= thirtyDaysFromNow;
-      })) {
-        stats.withExpiringCertifications++;
-      }
     });
 
     return stats;
   } catch (error) {
-    console.error('Error fetching material stats:', error);
+    console.error('Error getting material stats:', error);
     throw error;
   }
+}
+
+function calculateStockTurnover(materials: Material[]): number {
+  return materials.reduce((acc, m) => acc + m.consumptionRate, 0) / materials.length;
+}
+
+function calculateAverageLeadTime(materials: Material[]): number {
+  return materials.reduce((acc, m) => acc + (m.leadTime || 0), 0) / materials.length;
+}
+
+function getTopSuppliers(materials: Material[]): { id: string; name: string; totalSupplied: number; reliability: number }[] {
+  const supplierCounts = materials.reduce((acc, m) => {
+    if (m.supplierId) {
+      acc[m.supplierId] = (acc[m.supplierId] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  return Object.entries(supplierCounts)
+    .map(([id, count]) => ({
+      id,
+      name: id, // TODO: Get supplier name from suppliers collection
+      totalSupplied: count,
+      reliability: 100 // TODO: Calculate based on delivery performance
+    }))
+    .sort((a, b) => b.totalSupplied - a.totalSupplied)
+    .slice(0, 5);
+}
+
+function getRecentMovements(materials: Material[]): { materialId: string; type: string; date: Date }[] {
+  return materials
+    .flatMap(m => (m.movements || []).map(mov => ({
+      materialId: m.id,
+      type: mov.type,
+      date: new Date(mov.date)
+    })))
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, 10);
+}
+
+function getCriticalItems(materials: Material[]): string[] {
+  return materials
+    .filter(m => m.currentStock <= m.minStock || (m.certificationExpiryDate && new Date(m.certificationExpiryDate) <= new Date()))
+    .map(m => m.id)
+    .slice(0, 5);
 } 

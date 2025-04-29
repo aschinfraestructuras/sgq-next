@@ -7,11 +7,12 @@ import {
   query,
   where,
   orderBy,
-  limit,
+  limit as limitQuery,
   Timestamp,
+  DocumentData,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Material } from '@/types/materials';
+import type { Material } from '@/types/material';
 
 export interface MaterialHistoryEntry {
   id: string;
@@ -59,7 +60,7 @@ export const getMaterialHistory = async (materialId: string, limit?: number): Pr
     );
 
     if (limit) {
-      q = query(q, limit(limit));
+      q = query(q, limitQuery(limit));
     }
 
     const querySnapshot = await getDocs(q);
@@ -80,7 +81,7 @@ export const getRecentMaterialActivities = async (limit = 10): Promise<MaterialH
     const q = query(
       historyRef,
       orderBy('timestamp', 'desc'),
-      limit(limit)
+      limitQuery(limit)
     );
 
     const querySnapshot = await getDocs(q);

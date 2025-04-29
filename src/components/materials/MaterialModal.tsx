@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import MaterialForm from './MaterialForm';
-import type { Material } from '@/types/materials';
+import type { Material } from '@/types/material';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTranslation } from '@/hooks/useTranslation';
 import { XMarkIcon } from '@heroicons/react/24/outline';

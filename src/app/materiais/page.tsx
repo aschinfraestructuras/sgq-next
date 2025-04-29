@@ -3,12 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTranslation } from '@/hooks/useTranslation';
-import AppLayout from '@/components/layout/AppLayout';
 import MaterialModal from '@/components/materials/MaterialModal';
 import { getMaterials, createMaterial, updateMaterial, deleteMaterial } from '@/services/materials';
-import type { Material, MaterialFilter } from '@/types/materials';
+import type { Material, MaterialFilter } from '@/types/material';
+import { useRouter } from 'next/navigation';
 
 export default function MaterialsPage() {
+  const router = useRouter();
   const { language } = useLanguage();
   const { t } = useTranslation();
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -77,32 +78,28 @@ export default function MaterialsPage() {
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
-        </div>
-      </AppLayout>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary" />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <AppLayout>
-        <div className="flex flex-col items-center justify-center min-h-screen">
-          <div className="text-red-500 text-xl">{error}</div>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
-          >
-            {t('materials.messages.tryAgain')}
-          </button>
-        </div>
-      </AppLayout>
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="text-red-500 text-xl">{error}</div>
+        <button 
+          onClick={() => router.refresh()}
+          className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary-dark"
+        >
+          {t('materials.messages.tryAgain')}
+        </button>
+      </div>
     );
   }
 
   return (
-    <AppLayout>
+    <>
       <div className="py-8 px-4 mx-auto max-w-7xl">
         <div className="sm:flex sm:items-center sm:justify-between mb-8">
           <div>
@@ -150,7 +147,7 @@ export default function MaterialsPage() {
                 {materials.map((material) => (
                   <tr key={material.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      {material.code}
+                      {material.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                       {material.name}
@@ -160,8 +157,8 @@ export default function MaterialsPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        ${material.status === 'active' ? 'bg-green-100 text-green-800' : 
-                          material.status === 'inactive' ? 'bg-red-100 text-red-800' : 
+                        ${material.status === 'ativo' ? 'bg-green-100 text-green-800' : 
+                          material.status === 'inativo' ? 'bg-red-100 text-red-800' : 
                           'bg-yellow-100 text-yellow-800'}`}>
                         {t(`materials.status.${material.status}`)}
                       </span>
@@ -198,6 +195,6 @@ export default function MaterialsPage() {
         material={selectedMaterial}
         onSubmit={handleSubmit}
       />
-    </AppLayout>
+    </>
   );
 } 

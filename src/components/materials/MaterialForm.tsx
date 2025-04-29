@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTranslation } from '@/hooks/useTranslation';
-import type { Material, MaterialCategory, MaterialStatus, MaterialUnit } from '@/types/materials';
+import type { Material, MaterialCategory, MaterialStatus } from '@/types/material';
 import {
   TagIcon,
   DocumentTextIcon,
@@ -19,9 +19,9 @@ interface MaterialFormProps {
   onCancel: () => void;
 }
 
-const categories: MaterialCategory[] = ['raw', 'processed', 'packaging', 'equipment', 'other'];
-const statuses: MaterialStatus[] = ['active', 'inactive', 'pending', 'discontinued'];
-const units: MaterialUnit[] = ['kg', 'unit', 'm', 'm2', 'm3', 'l', 'ml', 'g'];
+const categories: MaterialCategory[] = ['materia-prima', 'insumo', 'equipamento', 'ferramenta', 'outro'];
+const statuses: MaterialStatus[] = ['ativo', 'inativo', 'em_analise', 'aguardando_teste', 'reprovado'];
+const units = ['kg', 'unit', 'm', 'm2', 'm3', 'l', 'ml', 'g'];
 
 const FormField = ({ 
   label, 
@@ -56,21 +56,15 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
   const { t } = useTranslation();
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Partial<Material>>({
     defaultValues: material || {
-      status: 'pending',
-      category: 'raw',
+      status: 'em_analise',
+      category: 'materia-prima',
       unit: 'unit',
       minStock: 0,
       currentStock: 0,
-      specifications: {
-        technical: {},
-        quality: {},
-        storage: {}
-      },
+      pendingTests: 0,
+      consumptionRate: 0,
       suppliers: [],
-      documents: [],
-      tests: [],
-      certifications: [],
-      metadata: {}
+      movements: []
     }
   });
 
@@ -86,17 +80,18 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Código */}
+          {/* ID */}
           <FormField 
-            label={t('materials.form.code')} 
-            error={errors.code?.message}
+            label={t('materials.form.id')} 
+            error={errors.id?.message}
             icon={TagIcon}
           >
             <input
               type="text"
-              {...register('code', { required: 'Código é obrigatório' })}
+              {...register('id')}
               className="input"
               placeholder="Ex: MAT-001"
+              disabled={!!material}
             />
           </FormField>
 
@@ -122,7 +117,7 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
               icon={DocumentTextIcon}
             >
               <textarea
-                {...register('description', { required: 'Descrição é obrigatória' })}
+                {...register('description')}
                 rows={3}
                 className="input resize-none"
                 placeholder="Descreva o material..."
@@ -217,35 +212,41 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
               placeholder="0"
             />
           </FormField>
+
+          {/* Preço Unitário */}
+          <FormField 
+            label={t('materials.form.unitPrice')} 
+            error={errors.unitPrice?.message}
+            icon={ScaleIcon}
+          >
+            <input
+              type="number"
+              step="0.01"
+              {...register('unitPrice', { 
+                required: 'Preço unitário é obrigatório',
+                min: { value: 0, message: 'Deve ser maior ou igual a 0' }
+              })}
+              className="input"
+              placeholder="0.00"
+            />
+          </FormField>
         </div>
       </div>
 
-      {/* Botões */}
-      <div className="flex justify-end space-x-3">
+      <div className="flex justify-end space-x-4">
         <button
           type="button"
           onClick={onCancel}
-          className="btn bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+          className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-800 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
         >
-          {t('materials.form.cancel')}
+          {t('common.cancel')}
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`
-            btn btn-primary
-            ${isSubmitting ? 'opacity-75 cursor-not-allowed' : ''}
-          `}
+          className="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md shadow-sm hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
         >
-          {isSubmitting ? (
-            <div className="flex items-center">
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              {t('materials.form.saving')}
-            </div>
-          ) : t('materials.form.save')}
+          {isSubmitting ? t('common.saving') : t('common.save')}
         </button>
       </div>
     </form>
