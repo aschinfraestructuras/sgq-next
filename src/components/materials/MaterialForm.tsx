@@ -16,7 +16,7 @@ const units: MaterialUnit[] = ['kg', 'unit', 'm', 'm2', 'm3', 'l', 'ml', 'g'];
 
 export default function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps) {
   const { language } = useLanguage();
-  const { t } = useTranslation(language);
+  const { t } = useTranslation();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Partial<Material>>({
     defaultValues: material || {
       status: 'pending',
