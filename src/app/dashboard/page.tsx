@@ -14,7 +14,9 @@ import {
   ExclamationTriangleIcon, 
   ClipboardDocumentCheckIcon,
   DocumentChartBarIcon,
-  ClipboardIcon
+  ClipboardIcon,
+  ArrowTrendingUpIcon,
+  CalendarIcon
 } from '@heroicons/react/24/outline';
 
 // Dados de exemplo - Em produção, virão da API
@@ -125,55 +127,94 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className="py-8 px-4 mx-auto max-w-7xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            {t('dashboard.title')}
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400">
-            {t('dashboard.subtitle')}
-          </p>
-        </div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="py-8 px-4 mx-auto max-w-7xl">
+          {/* Header */}
+          <div className="mb-8 animate-fade-in">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {t('dashboard.title')}
+                </h1>
+                <p className="text-gray-500">
+                  {t('dashboard.subtitle')}
+                </p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <button className="btn btn-primary flex items-center space-x-2">
+                  <CalendarIcon className="w-5 h-5" />
+                  <span>{t('dashboard.actions.viewCalendar')}</span>
+                </button>
+              </div>
+            </div>
+          </div>
 
-        {/* Cards de Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {modules.map((mod) => (
-            <StatsCard
-              key={mod.name}
-              title={t(mod.name)}
-              value={mod.value}
-              change={mod.change}
-              changeLabel={t('dashboard.stats.total')}
-              icon={mod.icon}
-              color={mod.color}
-            />
-          ))}
-        </div>
+          {/* Cards de Estatísticas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 animate-slide-in">
+            {modules.map((mod, index) => (
+              <div key={mod.name} style={{ animationDelay: `${index * 0.1}s` }}>
+                <StatsCard
+                  title={t(mod.name)}
+                  value={mod.value}
+                  change={mod.change}
+                  changeLabel={t('dashboard.stats.total')}
+                  icon={mod.icon}
+                  color={mod.color}
+                  href={mod.href}
+                />
+              </div>
+            ))}
+          </div>
 
-        {/* Gráficos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <DashboardChart
-            data={mockData.trends.documents}
-            title={t('dashboard.charts.documentsEvolution')}
-            type="area"
-          />
-          <DashboardChart
-            data={{
-              labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-              datasets: [
-                {
-                  name: t('dashboard.modules.nonConformities'),
-                  data: [8, 12, 15, 10, 8, 12]
-                }
-              ]
-            }}
-            title={t('dashboard.charts.nonConformities')}
-            type="bar"
-          />
-        </div>
+          {/* Seção de Análise */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                <ArrowTrendingUpIcon className="w-6 h-6 mr-2 text-primary" />
+                {t('dashboard.sections.analysis')}
+              </h2>
+            </div>
+            
+            {/* Gráficos */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="card p-6 animate-slide-in" style={{ animationDelay: '0.2s' }}>
+                <DashboardChart
+                  data={mockData.trends.documents}
+                  title={t('dashboard.charts.documentsEvolution')}
+                  type="area"
+                />
+              </div>
+              <div className="card p-6 animate-slide-in" style={{ animationDelay: '0.3s' }}>
+                <DashboardChart
+                  data={{
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                    datasets: [
+                      {
+                        name: t('dashboard.modules.nonConformities'),
+                        data: [8, 12, 15, 10, 8, 12]
+                      }
+                    ]
+                  }}
+                  title={t('dashboard.charts.nonConformities')}
+                  type="bar"
+                />
+              </div>
+            </div>
+          </div>
 
-        {/* Linha do Tempo */}
-        <Timeline items={mockData.recentActivity} />
+          {/* Atividade Recente */}
+          <div className="card p-6 animate-slide-in" style={{ animationDelay: '0.4s' }}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">
+                {t('dashboard.sections.recentActivity')}
+              </h2>
+              <button className="text-primary hover:text-primary-dark font-medium">
+                {t('dashboard.actions.viewAll')}
+              </button>
+            </div>
+            <Timeline items={mockData.recentActivity} />
+          </div>
+        </div>
       </div>
     </AppLayout>
   );

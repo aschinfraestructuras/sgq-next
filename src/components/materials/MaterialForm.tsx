@@ -3,6 +3,15 @@ import { useForm } from 'react-hook-form';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTranslation } from '@/hooks/useTranslation';
 import type { Material, MaterialCategory, MaterialStatus, MaterialUnit } from '@/types/materials';
+import {
+  TagIcon,
+  DocumentTextIcon,
+  CubeIcon,
+  CheckCircleIcon,
+  ScaleIcon,
+  ArrowsPointingInIcon,
+  ArrowsPointingOutIcon
+} from '@heroicons/react/24/outline';
 
 interface MaterialFormProps {
   material?: Partial<Material>;
@@ -14,10 +23,38 @@ const categories: MaterialCategory[] = ['raw', 'processed', 'packaging', 'equipm
 const statuses: MaterialStatus[] = ['active', 'inactive', 'pending', 'discontinued'];
 const units: MaterialUnit[] = ['kg', 'unit', 'm', 'm2', 'm3', 'l', 'ml', 'g'];
 
+const FormField = ({ 
+  label, 
+  error, 
+  icon: Icon,
+  children 
+}: { 
+  label: string; 
+  error?: string;
+  icon?: React.ElementType;
+  children: React.ReactNode;
+}) => (
+  <div className="animate-slide-in">
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      <div className="flex items-center space-x-2">
+        {Icon && <Icon className="h-5 w-5 text-gray-400" />}
+        <span>{label}</span>
+      </div>
+    </label>
+    {children}
+    {error && (
+      <p className="mt-1 text-sm text-red-600 flex items-center">
+        <span className="mr-1">•</span>
+        {error}
+      </p>
+    )}
+  </div>
+);
+
 export default function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps) {
   const { language } = useLanguage();
   const { t } = useTranslation();
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Partial<Material>>({
+  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Partial<Material>>({
     defaultValues: material || {
       status: 'pending',
       category: 'raw',
@@ -33,139 +70,149 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
     }
   });
 
+  const currentStock = watch('currentStock');
+  const minStock = watch('minStock');
+  const stockStatus = currentStock && minStock ? (
+    currentStock <= minStock ? 'text-red-600' :
+    currentStock <= minStock * 1.2 ? 'text-yellow-600' :
+    'text-green-600'
+  ) : '';
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Código */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('materials.form.code')}
-          </label>
-          <input
-            type="text"
-            {...register('code', { required: 'Código é obrigatório' })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-          />
-          {errors.code && (
-            <p className="mt-1 text-sm text-red-600">{errors.code.message}</p>
-          )}
-        </div>
-
-        {/* Nome */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('materials.form.name')}
-          </label>
-          <input
-            type="text"
-            {...register('name', { required: 'Nome é obrigatório' })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-          />
-          {errors.name && (
-            <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-          )}
-        </div>
-
-        {/* Descrição */}
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('materials.form.description')}
-          </label>
-          <textarea
-            {...register('description', { required: 'Descrição é obrigatória' })}
-            rows={3}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-          />
-          {errors.description && (
-            <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
-          )}
-        </div>
-
-        {/* Categoria */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('materials.form.category')}
-          </label>
-          <select
-            {...register('category')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Código */}
+          <FormField 
+            label={t('materials.form.code')} 
+            error={errors.code?.message}
+            icon={TagIcon}
           >
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {t(`materials.categories.${category}`)}
-              </option>
-            ))}
-          </select>
-        </div>
+            <input
+              type="text"
+              {...register('code', { required: 'Código é obrigatório' })}
+              className="input"
+              placeholder="Ex: MAT-001"
+            />
+          </FormField>
 
-        {/* Status */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('materials.form.status')}
-          </label>
-          <select
-            {...register('status')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+          {/* Nome */}
+          <FormField 
+            label={t('materials.form.name')} 
+            error={errors.name?.message}
+            icon={DocumentTextIcon}
           >
-            {statuses.map((status) => (
-              <option key={status} value={status}>
-                {t(`materials.status.${status}`)}
-              </option>
-            ))}
-          </select>
-        </div>
+            <input
+              type="text"
+              {...register('name', { required: 'Nome é obrigatório' })}
+              className="input"
+              placeholder="Ex: Aço Inoxidável 304"
+            />
+          </FormField>
 
-        {/* Unidade */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('materials.form.unit')}
-          </label>
-          <select
-            {...register('unit')}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+          {/* Descrição */}
+          <div className="md:col-span-2">
+            <FormField 
+              label={t('materials.form.description')} 
+              error={errors.description?.message}
+              icon={DocumentTextIcon}
+            >
+              <textarea
+                {...register('description', { required: 'Descrição é obrigatória' })}
+                rows={3}
+                className="input resize-none"
+                placeholder="Descreva o material..."
+              />
+            </FormField>
+          </div>
+
+          {/* Categoria */}
+          <FormField 
+            label={t('materials.form.category')} 
+            error={errors.category?.message}
+            icon={CubeIcon}
           >
-            {units.map((unit) => (
-              <option key={unit} value={unit}>
-                {unit.toUpperCase()}
-              </option>
-            ))}
-          </select>
-        </div>
+            <select
+              {...register('category')}
+              className="input"
+            >
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {t(`materials.categories.${category}`)}
+                </option>
+              ))}
+            </select>
+          </FormField>
 
-        {/* Estoque Mínimo */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('materials.form.minStock')}
-          </label>
-          <input
-            type="number"
-            {...register('minStock', { 
-              required: 'Estoque mínimo é obrigatório',
-              min: { value: 0, message: 'Deve ser maior ou igual a 0' }
-            })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-          />
-          {errors.minStock && (
-            <p className="mt-1 text-sm text-red-600">{errors.minStock.message}</p>
-          )}
-        </div>
+          {/* Status */}
+          <FormField 
+            label={t('materials.form.status')} 
+            error={errors.status?.message}
+            icon={CheckCircleIcon}
+          >
+            <select
+              {...register('status')}
+              className="input"
+            >
+              {statuses.map((status) => (
+                <option key={status} value={status}>
+                  {t(`materials.status.${status}`)}
+                </option>
+              ))}
+            </select>
+          </FormField>
 
-        {/* Estoque Atual */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            {t('materials.form.currentStock')}
-          </label>
-          <input
-            type="number"
-            {...register('currentStock', { 
-              required: 'Estoque atual é obrigatório',
-              min: { value: 0, message: 'Deve ser maior ou igual a 0' }
-            })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
-          />
-          {errors.currentStock && (
-            <p className="mt-1 text-sm text-red-600">{errors.currentStock.message}</p>
-          )}
+          {/* Unidade */}
+          <FormField 
+            label={t('materials.form.unit')} 
+            error={errors.unit?.message}
+            icon={ScaleIcon}
+          >
+            <select
+              {...register('unit')}
+              className="input"
+            >
+              {units.map((unit) => (
+                <option key={unit} value={unit}>
+                  {unit.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </FormField>
+
+          {/* Estoque Mínimo */}
+          <FormField 
+            label={t('materials.form.minStock')} 
+            error={errors.minStock?.message}
+            icon={ArrowsPointingInIcon}
+          >
+            <input
+              type="number"
+              {...register('minStock', { 
+                required: 'Estoque mínimo é obrigatório',
+                min: { value: 0, message: 'Deve ser maior ou igual a 0' }
+              })}
+              className="input"
+              placeholder="0"
+            />
+          </FormField>
+
+          {/* Estoque Atual */}
+          <FormField 
+            label={t('materials.form.currentStock')} 
+            error={errors.currentStock?.message}
+            icon={ArrowsPointingOutIcon}
+          >
+            <input
+              type="number"
+              {...register('currentStock', { 
+                required: 'Estoque atual é obrigatório',
+                min: { value: 0, message: 'Deve ser maior ou igual a 0' }
+              })}
+              className={`input ${stockStatus}`}
+              placeholder="0"
+            />
+          </FormField>
         </div>
       </div>
 
@@ -174,16 +221,27 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          className="btn bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
         >
           {t('materials.form.cancel')}
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md shadow-sm hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          className={`
+            btn btn-primary
+            ${isSubmitting ? 'opacity-75 cursor-not-allowed' : ''}
+          `}
         >
-          {isSubmitting ? t('materials.form.saving') : t('materials.form.save')}
+          {isSubmitting ? (
+            <div className="flex items-center">
+              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              {t('materials.form.saving')}
+            </div>
+          ) : t('materials.form.save')}
         </button>
       </div>
     </form>

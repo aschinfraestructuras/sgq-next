@@ -12,23 +12,30 @@ import {
   QueryDocumentSnapshot,
   Timestamp,
   CollectionReference,
+  Firestore,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Material, MaterialFilter, MaterialStats } from '@/types/materials';
 
 const COLLECTION = 'materials';
-const materialsRef = collection(db, COLLECTION);
+
+// Helper function to get collection reference
+const getCollectionRef = () => {
+  if (!db) throw new Error('Firestore is not initialized');
+  return collection(db, COLLECTION);
+};
 
 export const getMaterials = async (filter?: MaterialFilter): Promise<Material[]> => {
   try {
+    const materialsRef = getCollectionRef();
     let q = query(materialsRef);
 
     if (filter) {
       if (filter.category) {
-        q = query(materialsRef, where('category', '==', filter.category));
+        q = query(q, where('category', '==', filter.category));
       }
       if (filter.status) {
-        q = query(materialsRef, where('status', '==', filter.status));
+        q = query(q, where('status', '==', filter.status));
       }
     }
 
@@ -47,6 +54,7 @@ export const getMaterials = async (filter?: MaterialFilter): Promise<Material[]>
 
 export const getMaterial = async (id: string): Promise<Material | null> => {
   try {
+    if (!db) throw new Error('Firestore is not initialized');
     const docRef = doc(db, COLLECTION, id);
     const docSnap = await getDoc(docRef);
 
@@ -69,6 +77,7 @@ export const getMaterial = async (id: string): Promise<Material | null> => {
 
 export const createMaterial = async (data: Omit<Material, 'id' | 'createdAt' | 'updatedAt'>): Promise<Material> => {
   try {
+    const materialsRef = getCollectionRef();
     const now = Timestamp.now();
     const docRef = await addDoc(materialsRef, {
       ...data,
@@ -90,6 +99,7 @@ export const createMaterial = async (data: Omit<Material, 'id' | 'createdAt' | '
 
 export const updateMaterial = async (id: string, data: Partial<Material>): Promise<void> => {
   try {
+    if (!db) throw new Error('Firestore is not initialized');
     const docRef = doc(db, COLLECTION, id);
     await updateDoc(docRef, {
       ...data,
@@ -103,6 +113,7 @@ export const updateMaterial = async (id: string, data: Partial<Material>): Promi
 
 export const deleteMaterial = async (id: string): Promise<void> => {
   try {
+    if (!db) throw new Error('Firestore is not initialized');
     const docRef = doc(db, COLLECTION, id);
     await deleteDoc(docRef);
   } catch (error) {
@@ -113,7 +124,7 @@ export const deleteMaterial = async (id: string): Promise<void> => {
 
 export async function getMaterialStats(): Promise<MaterialStats> {
   try {
-    const materialsRef = collection(db, 'materials');
+    const materialsRef = getCollectionRef();
     const snapshot = await getDocs(materialsRef);
     const materials = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Material);
 
