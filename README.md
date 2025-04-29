@@ -98,4 +98,4 @@ Este projeto está licenciado sob a licença MIT.
 
 Para mais informações, entre em contato através do email: [seu-email@exemplo.com](mailto:seu-email@exemplo.com) 
 
-Projeto SGQ-next  2025
+Projeto SGQ-Next  - Todos os direitos reservados  2025
