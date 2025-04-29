@@ -1,70 +1,32 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut as firebaseSignOut,
-  User
-} from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { Usuario } from '@/types';
+'use client';
+
+import React, { createContext, useContext, useState } from 'react';
 
 interface AuthContextType {
-  currentUser: User | null;
-  userProfile: Usuario | null;
-  isLoading: boolean;
+  user: any | null;
+  loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<Usuario | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setIsLoading(false);
-      
-      // Aqui você pode buscar dados adicionais do usuário do Firestore
-      // Para simplificar, estamos apenas definindo um perfil básico
-      if (user) {
-        const basicProfile: Usuario = {
-          id: user.uid,
-          nome: user.displayName || 'Usuário',
-          email: user.email || '',
-          tipo_utilizador: 'admin', // Temporário, deve ser buscado do banco
-          ativo: true,
-          data_criacao: new Date()
-        };
-        setUserProfile(basicProfile);
-      } else {
-        setUserProfile(null);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+  const [user, setUser] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    // Implementar depois
+    console.log('Sign in:', email, password);
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
-    await createUserWithEmailAndPassword(auth, email, password);
-    // Aqui você pode criar o documento do usuário no Firestore com dados adicionais
-  };
-
-  const signOut = async () => {
-    await firebaseSignOut(auth);
+  const logout = async () => {
+    // Implementar depois
+    console.log('Logout');
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, userProfile, isLoading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, logout }}>
       {children}
     </AuthContext.Provider>
   );
