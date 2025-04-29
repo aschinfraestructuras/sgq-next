@@ -10,7 +10,7 @@ import type { Material, MaterialFilter } from '@/types/materials';
 
 export default function MaterialsPage() {
   const { language } = useLanguage();
-  const { t } = useTranslation(language);
+  const { t } = useTranslation();
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -197,7 +197,6 @@ export default function MaterialsPage() {
         onClose={() => setIsModalOpen(false)}
         material={selectedMaterial}
         onSubmit={handleSubmit}
-        title={selectedMaterial ? t('materials.edit') : t('materials.new')}
       />
     </AppLayout>
   );
