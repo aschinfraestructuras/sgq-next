@@ -29,5 +29,57 @@
         "inProgress": "Em Andamento"
       }
     }
+  },
+  "materials": {
+    "title": "Materiais",
+    "subtitle": "Gerencie todos os materiais do sistema",
+    "new": "Novo Material",
+    "edit": "Editar Material",
+    "form": {
+      "code": "Código",
+      "name": "Nome",
+      "description": "Descrição",
+      "category": "Categoria",
+      "status": "Status",
+      "unit": "Unidade",
+      "minStock": "Estoque Mínimo",
+      "currentStock": "Estoque Atual",
+      "save": "Salvar",
+      "saving": "Salvando...",
+      "cancel": "Cancelar"
+    },
+    "table": {
+      "code": "Código",
+      "name": "Nome",
+      "category": "Categoria",
+      "status": "Status",
+      "stock": "Estoque",
+      "actions": "Ações"
+    },
+    "actions": {
+      "edit": "Editar",
+      "delete": "Excluir",
+      "deleting": "Excluindo..."
+    },
+    "messages": {
+      "confirmDelete": "Tem certeza que deseja excluir este material?",
+      "errorLoading": "Erro ao carregar materiais",
+      "errorSaving": "Erro ao salvar material",
+      "errorDeleting": "Erro ao excluir material",
+      "tryAgain": "Tentar novamente"
+    },
+    "categories": {
+      "raw": "Matéria Prima",
+      "processed": "Processado",
+      "packaging": "Embalagem",
+      "equipment": "Equipamento",
+      "other": "Outro"
+    },
+    "status": {
+      "active": "Ativo",
+      "inactive": "Inativo",
+      "pending": "Pendente",
+      "discontinued": "Descontinuado"
+    }
   }
 } 

@@ -29,5 +29,57 @@
         "inProgress": "In Progress"
       }
     }
+  },
+  "materials": {
+    "title": "Materials",
+    "subtitle": "Manage all system materials",
+    "new": "New Material",
+    "edit": "Edit Material",
+    "form": {
+      "code": "Code",
+      "name": "Name",
+      "description": "Description",
+      "category": "Category",
+      "status": "Status",
+      "unit": "Unit",
+      "minStock": "Minimum Stock",
+      "currentStock": "Current Stock",
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel"
+    },
+    "table": {
+      "code": "Code",
+      "name": "Name",
+      "category": "Category",
+      "status": "Status",
+      "stock": "Stock",
+      "actions": "Actions"
+    },
+    "actions": {
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleting": "Deleting..."
+    },
+    "messages": {
+      "confirmDelete": "Are you sure you want to delete this material?",
+      "errorLoading": "Error loading materials",
+      "errorSaving": "Error saving material",
+      "errorDeleting": "Error deleting material",
+      "tryAgain": "Try again"
+    },
+    "categories": {
+      "raw": "Raw Material",
+      "processed": "Processed",
+      "packaging": "Packaging",
+      "equipment": "Equipment",
+      "other": "Other"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "discontinued": "Discontinued"
+    }
   }
 } 
