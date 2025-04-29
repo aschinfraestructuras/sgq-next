@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -7,188 +7,212 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Button,
   IconButton,
-  Tooltip,
+  Button,
   Chip,
 } from '@mui/material';
 import {
-  BeakerIcon,
-  DocumentArrowDownIcon,
-  PlusIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ClockIcon,
-  ArrowPathIcon,
+  PencilIcon,
+  TrashIcon,
+  DocumentDuplicateIcon,
+  EyeIcon,
 } from '@heroicons/react/24/outline';
-import type { Material, MaterialTest } from '@/types/materials';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import type { MaterialTest } from '@/types/materials';
+import MaterialTestForm from './MaterialTestForm';
+import MaterialTestDetails from './MaterialTestDetails';
 
 interface MaterialTestsProps {
-  material: Material;
-  onAddTest: () => void;
-  onViewTestDetails: (test: MaterialTest) => void;
-  onDownloadReport: (test: MaterialTest) => void;
+  materialId: string;
+  tests: MaterialTest[];
+  onAdd: (test: Omit<MaterialTest, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  onEdit: (id: string, test: Omit<MaterialTest, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+  onDuplicate: (test: MaterialTest) => Promise<void>;
 }
 
+const getStatusColor = (status: MaterialTest['status']): 'default' | 'primary' | 'success' | 'error' => {
+  switch (status) {
+    case 'pending':
+      return 'default';
+    case 'in_progress':
+      return 'primary';
+    case 'passed':
+      return 'success';
+    case 'failed':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
+
+const getStatusLabel = (status: MaterialTest['status']): string => {
+  switch (status) {
+    case 'pending':
+      return 'Pendente';
+    case 'in_progress':
+      return 'Em Progresso';
+    case 'passed':
+      return 'Aprovado';
+    case 'failed':
+      return 'Reprovado';
+    default:
+      return status;
+  }
+};
+
 export default function MaterialTests({
-  material,
-  onAddTest,
-  onViewTestDetails,
-  onDownloadReport,
+  materialId,
+  tests,
+  onAdd,
+  onEdit,
+  onDelete,
+  onDuplicate,
 }: MaterialTestsProps) {
-  const getStatusConfig = (status: MaterialTest['status']) => {
-    switch (status) {
-      case 'passed':
-        return {
-          icon: <CheckCircleIcon className="h-5 w-5" />,
-          color: 'success',
-          label: 'Aprovado',
-          className: 'bg-green-100 text-green-800'
-        };
-      case 'failed':
-        return {
-          icon: <XCircleIcon className="h-5 w-5" />,
-          color: 'error',
-          label: 'Reprovado',
-          className: 'bg-red-100 text-red-800'
-        };
-      case 'in_progress':
-        return {
-          icon: <ArrowPathIcon className="h-5 w-5" />,
-          color: 'warning',
-          label: 'Em Progresso',
-          className: 'bg-yellow-100 text-yellow-800'
-        };
-      case 'pending':
-      default:
-        return {
-          icon: <ClockIcon className="h-5 w-5" />,
-          color: 'default',
-          label: 'Pendente',
-          className: 'bg-gray-100 text-gray-800'
-        };
+  const [selectedTest, setSelectedTest] = useState<MaterialTest | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleAdd = () => {
+    setSelectedTest(null);
+    setIsEditing(false);
+    setIsFormOpen(true);
+  };
+
+  const handleEdit = (test: MaterialTest) => {
+    setSelectedTest(test);
+    setIsEditing(true);
+    setIsFormOpen(true);
+  };
+
+  const handleView = (test: MaterialTest) => {
+    setSelectedTest(test);
+    setIsDetailsOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setIsFormOpen(false);
+    setSelectedTest(null);
+  };
+
+  const handleCloseDetails = () => {
+    setIsDetailsOpen(false);
+    setSelectedTest(null);
+  };
+
+  const handleSubmit = async (testData: Omit<MaterialTest, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (selectedTest && isEditing) {
+      await onEdit(selectedTest.id, testData);
+    } else {
+      await onAdd(testData);
     }
+    handleCloseForm();
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900">
-            Testes do Material
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            Gerencie os testes e resultados do material
-          </p>
-        </div>
+    <>
+      <div className="mb-4 flex justify-end">
         <Button
           variant="contained"
           color="primary"
-          startIcon={<PlusIcon className="h-5 w-5" />}
-          onClick={onAddTest}
+          onClick={handleAdd}
+          startIcon={<DocumentDuplicateIcon className="h-5 w-5" />}
         >
-          Adicionar Teste
+          Novo Teste
         </Button>
       </div>
 
-      <TableContainer component={Paper} className="shadow-sm">
+      <TableContainer component={Paper}>
         <Table>
           <TableHead>
-            <TableRow className="bg-gray-50">
+            <TableRow>
               <TableCell>Tipo</TableCell>
               <TableCell>Data</TableCell>
               <TableCell>Técnico</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Resultados</TableCell>
-              <TableCell align="right">Ações</TableCell>
+              <TableCell width={140} align="right">
+                Ações
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {material.tests.map((test) => {
-              const statusConfig = getStatusConfig(test.status);
-              
-              return (
-                <TableRow
-                  key={test.id}
-                  className="hover:bg-gray-50"
-                >
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <BeakerIcon className="h-5 w-5 text-gray-400" />
-                      <span className="font-medium">{test.type}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(test.date), 'dd/MM/yyyy', { locale: ptBR })}
-                  </TableCell>
-                  <TableCell>{test.technician}</TableCell>
-                  <TableCell>
-                    <Chip
-                      icon={statusConfig.icon}
-                      label={statusConfig.label}
-                      color={statusConfig.color as any}
-                      size="small"
-                      className={statusConfig.className}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {Object.entries(test.results).map(([key, value]) => (
-                      <div key={key} className="text-sm">
-                        <span className="font-medium">{key}:</span> {value}
-                      </div>
-                    ))}
-                  </TableCell>
-                  <TableCell align="right">
-                    <div className="flex justify-end space-x-2">
-                      <Tooltip title="Ver Detalhes">
-                        <IconButton
-                          size="small"
-                          onClick={() => onViewTestDetails(test)}
-                        >
-                          <BeakerIcon className="h-4 w-4" />
-                        </IconButton>
-                      </Tooltip>
-                      {test.attachments && test.attachments.length > 0 && (
-                        <Tooltip title="Baixar Relatório">
-                          <IconButton
-                            size="small"
-                            onClick={() => onDownloadReport(test)}
-                          >
-                            <DocumentArrowDownIcon className="h-4 w-4" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-            {material.tests.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
-                  <div className="text-gray-500">
-                    <BeakerIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                    <p className="text-sm">
-                      Nenhum teste registrado
-                    </p>
-                    <Button
-                      variant="text"
-                      color="primary"
-                      startIcon={<PlusIcon className="h-5 w-5" />}
-                      onClick={onAddTest}
-                      className="mt-2"
-                    >
-                      Adicionar Primeiro Teste
-                    </Button>
-                  </div>
+            {tests.map((test) => (
+              <TableRow key={test.id}>
+                <TableCell>{test.type}</TableCell>
+                <TableCell>
+                  {format(new Date(test.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
+                </TableCell>
+                <TableCell>{test.technician}</TableCell>
+                <TableCell>
+                  <Chip
+                    label={getStatusLabel(test.status)}
+                    color={getStatusColor(test.status)}
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell>
+                  {test.results.length > 0 ? (
+                    <span>{test.results.length} resultados</span>
+                  ) : (
+                    <span className="text-gray-400">Sem resultados</span>
+                  )}
+                </TableCell>
+                <TableCell align="right">
+                  <IconButton
+                    onClick={() => handleView(test)}
+                    size="small"
+                    title="Visualizar"
+                  >
+                    <EyeIcon className="h-5 w-5" />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => handleEdit(test)}
+                    size="small"
+                    title="Editar"
+                  >
+                    <PencilIcon className="h-5 w-5" />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => onDuplicate(test)}
+                    size="small"
+                    title="Duplicar"
+                  >
+                    <DocumentDuplicateIcon className="h-5 w-5" />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => onDelete(test.id)}
+                    size="small"
+                    title="Excluir"
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </IconButton>
                 </TableCell>
               </TableRow>
-            )}
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
-    </div>
+
+      {isFormOpen && (
+        <MaterialTestForm
+          materialId={materialId}
+          open={isFormOpen}
+          onClose={handleCloseForm}
+          onSubmit={handleSubmit}
+          initialData={selectedTest}
+        />
+      )}
+
+      {isDetailsOpen && selectedTest && (
+        <MaterialTestDetails
+          test={selectedTest}
+          open={isDetailsOpen}
+          onClose={handleCloseDetails}
+        />
+      )}
+    </>
   );
 } 
