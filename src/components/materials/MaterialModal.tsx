@@ -15,7 +15,7 @@ interface MaterialModalProps {
 
 export default function MaterialModal({ isOpen, onClose, onSubmit, material }: MaterialModalProps) {
   const { language } = useLanguage();
-  const { t } = useTranslation(language);
+  const { t } = useTranslation();
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
