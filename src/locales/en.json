@@ -1,0 +1,33 @@
+{
+  "dashboard": {
+    "title": "Global Dashboard",
+    "subtitle": "System overview and key metrics",
+    "modules": {
+      "documents": "Documents",
+      "tests": "Tests",
+      "nonConformities": "Non-Conformities",
+      "checklist": "Check List",
+      "audits": "Audits",
+      "reports": "Reports"
+    },
+    "stats": {
+      "total": "Total",
+      "pending": "Pending",
+      "completed": "Completed",
+      "inProgress": "In Progress"
+    },
+    "charts": {
+      "documentsEvolution": "Documents Evolution",
+      "nonConformities": "Non-Conformities"
+    },
+    "timeline": {
+      "title": "Recent Activities",
+      "status": {
+        "pending": "Pending",
+        "completed": "Completed",
+        "failed": "Failed",
+        "inProgress": "In Progress"
+      }
+    }
+  }
+} 

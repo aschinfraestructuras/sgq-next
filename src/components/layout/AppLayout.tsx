@@ -7,6 +7,7 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import { useAppState } from '@/hooks/useAppState';
 import { useAuth } from '@/hooks/useAuth';
+import LanguageSelector from '../LanguageSelector';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -96,6 +97,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     </li>
                   </ol>
                 </nav>
+              </div>
+
+              <div className="flex flex-1 justify-end gap-x-4 self-stretch lg:gap-x-6">
+                <div className="flex items-center gap-x-4 lg:gap-x-6">
+                  <LanguageSelector />
+                </div>
               </div>
 
               {children}
