@@ -274,7 +274,7 @@ export default function MaterialsPage() {
                 </td>
                 <td className="p-4">
                   <Typography {...baseProps} variant="small" color="blue-gray" className="font-normal">
-                    {material.quantidade} {material.unidade}
+                    {material.currentStock}
                   </Typography>
                 </td>
                 <td className="p-4">
