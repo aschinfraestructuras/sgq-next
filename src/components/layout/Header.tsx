@@ -113,17 +113,17 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           {/* Menu do Usuário */}
           <Menu as="div" className="relative">
             <Menu.Button className="flex items-center space-x-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-2">
-              {user?.avatar ? (
+              {user?.photoURL ? (
                 <img
                   className="h-8 w-8 rounded-full"
-                  src={user.avatar}
-                  alt={user.name}
+                  src={user.photoURL}
+                  alt={user.displayName || 'Usuário'}
                 />
               ) : (
                 <UserCircleIcon className="h-8 w-8 text-gray-400" />
               )}
               <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {user?.name || 'Usuário'}
+                {user?.displayName || 'Usuário'}
               </span>
             </Menu.Button>
             <Transition

@@ -6,6 +6,7 @@ export interface User extends FirebaseUser {
   active?: boolean;
   createdAt?: Date;
   lastLogin?: Date;
+  avatar?: string | null;
 }
 
 export interface FirestoreDocument extends DocumentData {
