@@ -10,7 +10,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Grid,
+  Box,
   IconButton,
 } from '@mui/material';
 import { XMarkIcon } from '@heroicons/react/24/outline';
@@ -26,8 +26,6 @@ interface MaterialTestFormProps {
   initialData?: MaterialTest;
 }
 
-type MaterialTestFormData = Omit<MaterialTest, 'id' | 'createdAt' | 'updatedAt'>;
-
 export default function MaterialTestForm({
   materialId,
   open,
@@ -35,33 +33,32 @@ export default function MaterialTestForm({
   onSubmit,
   initialData
 }: MaterialTestFormProps) {
-  const [formData, setFormData] = useState<MaterialTestFormData>(() => {
+  const [formData, setFormData] = useState<Omit<MaterialTest, 'id' | 'createdAt' | 'updatedAt'>>(() => {
     if (initialData) {
       const { id, createdAt, updatedAt, ...rest } = initialData;
       return rest;
     }
 
-    const now = new Date().toISOString();
     return {
       materialId,
+      batchId: '',
       type: '',
-      date: now.split('T')[0],
+      description: '',
       status: 'pending' as TestStatus,
-      results: {} as TestResults,
+      dueDate: new Date(),
+      results: [],
       technician: '',
       notes: '',
       attachments: [],
-      createdBy: '',
-      updatedBy: ''
     };
   });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = <K extends keyof MaterialTestFormData>(
+  const handleChange = <K extends keyof Omit<MaterialTest, 'id' | 'createdAt' | 'updatedAt'>>(
     field: K,
-    value: MaterialTestFormData[K]
+    value: Omit<MaterialTest, 'id' | 'createdAt' | 'updatedAt'>[K]
   ) => {
     setFormData(prev => ({
       ...prev,
@@ -75,18 +72,12 @@ export default function MaterialTestForm({
     setError(null);
 
     try {
-      const user = await getCurrentUser() as User;
+      const user = await getCurrentUser();
       if (!user) {
         throw new Error('Usuário não autenticado');
       }
 
-      const testData: MaterialTestFormData = {
-        ...formData,
-        createdBy: initialData?.createdBy || user.uid,
-        updatedBy: user.uid,
-      };
-
-      await onSubmit(testData);
+      await onSubmit(formData);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar teste');
@@ -106,8 +97,8 @@ export default function MaterialTestForm({
 
       <form onSubmit={handleSubmit}>
         <DialogContent>
-          <Grid container spacing={3}>
-            <Grid item component="div" xs={12} sm={6}>
+          <Box display="flex" flexDirection="column" gap={3}>
+            <Box display="flex" gap={2}>
               <TextField
                 fullWidth
                 label="Tipo de Teste"
@@ -115,21 +106,19 @@ export default function MaterialTestForm({
                 onChange={(e) => handleChange('type', e.target.value)}
                 required
               />
-            </Grid>
 
-            <Grid item component="div" xs={12} sm={6}>
               <TextField
                 fullWidth
                 type="date"
-                label="Data"
-                value={formData.date?.split('T')[0]}
-                onChange={(e) => handleChange('date', e.target.value)}
+                label="Data Prevista"
+                value={formData.dueDate instanceof Date ? formData.dueDate.toISOString().split('T')[0] : ''}
+                onChange={(e) => handleChange('dueDate', new Date(e.target.value))}
                 required
                 InputLabelProps={{ shrink: true }}
               />
-            </Grid>
+            </Box>
 
-            <Grid item component="div" xs={12} sm={6}>
+            <Box display="flex" gap={2}>
               <TextField
                 fullWidth
                 label="Técnico Responsável"
@@ -137,9 +126,7 @@ export default function MaterialTestForm({
                 onChange={(e) => handleChange('technician', e.target.value)}
                 required
               />
-            </Grid>
 
-            <Grid item component="div" xs={12} sm={6}>
               <FormControl fullWidth required>
                 <InputLabel>Status</InputLabel>
                 <Select
@@ -153,38 +140,44 @@ export default function MaterialTestForm({
                   <MenuItem value="failed">Reprovado</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
+            </Box>
 
-            <Grid item component="div" xs={12}>
-              <TextField
-                fullWidth
-                label="Resultados"
-                multiline
-                rows={4}
-                value={JSON.stringify(formData.results, null, 2)}
-                onChange={(e) => {
-                  try {
-                    const results = JSON.parse(e.target.value) as TestResults;
-                    handleChange('results', results);
-                  } catch {
-                    // Ignore invalid JSON
-                  }
-                }}
-                helperText="Insira os resultados em formato JSON"
-              />
-            </Grid>
+            <TextField
+              fullWidth
+              label="Descrição"
+              value={formData.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              required
+              multiline
+              rows={2}
+            />
 
-            <Grid item component="div" xs={12}>
-              <TextField
-                fullWidth
-                label="Observações"
-                multiline
-                rows={3}
-                value={formData.notes}
-                onChange={(e) => handleChange('notes', e.target.value)}
-              />
-            </Grid>
-          </Grid>
+            <TextField
+              fullWidth
+              label="Resultados"
+              multiline
+              rows={4}
+              value={JSON.stringify(formData.results, null, 2)}
+              onChange={(e) => {
+                try {
+                  const results = JSON.parse(e.target.value) as TestResults[];
+                  handleChange('results', results);
+                } catch {
+                  // Ignore invalid JSON
+                }
+              }}
+              helperText="Insira os resultados em formato JSON"
+            />
+
+            <TextField
+              fullWidth
+              label="Observações"
+              multiline
+              rows={3}
+              value={formData.notes}
+              onChange={(e) => handleChange('notes', e.target.value)}
+            />
+          </Box>
 
           {error && (
             <div className="mt-3 text-red-600 text-sm">
@@ -203,7 +196,7 @@ export default function MaterialTestForm({
             color="primary"
             disabled={loading}
           >
-            {loading ? 'Salvando...' : 'Salvar'}
+            {loading ? 'Salvando...' : initialData ? 'Atualizar' : 'Criar'}
           </Button>
         </DialogActions>
       </form>
