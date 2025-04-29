@@ -19,73 +19,12 @@ import {
   ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 
-// Interface para o dashboard
-interface DashboardStats {
-  total: number;
-  porCategoria: { [key: string]: number };
-  porStatus: {
-    ativo: number;
-    inativo: number;
-    em_analise: number;
-  };
-  valorTotal: number;
-  quantidadeTotal: number;
-  mediaConsumoMensal: number;
-  totalCost: number;
-  movimentacoes: Array<{
-    data: string;
-    tipo: string;
-    quantidade: number;
-    material: string;
-  }>;
-  consumoMedioMensal: Array<{
-    mes: string;
-    consumo: number;
-  }>;
-}
-
 // Base props para os componentes do Material Tailwind
 const baseProps = {
   placeholder: "",
   onPointerEnterCapture: () => {},
   onPointerLeaveCapture: () => {},
   crossOrigin: undefined as any,
-};
-
-// Mock stats adaptado para o novo formato
-const mockStats: DashboardStats = {
-  total: 3,
-  porCategoria: {
-    'Materiais de Construção': 2,
-    'Acabamentos': 1
-  },
-  porStatus: {
-    ativo: 2,
-    inativo: 0,
-    em_analise: 1
-  },
-  valorTotal: 15000,
-  quantidadeTotal: 1550,
-  mediaConsumoMensal: 250,
-  totalCost: 15000,
-  movimentacoes: [
-    {
-      data: '2024-02-20T10:00:00',
-      tipo: 'entrada',
-      quantidade: 500,
-      material: 'Material A'
-    },
-    {
-      data: '2024-02-19T15:30:00',
-      tipo: 'saida',
-      quantidade: 200,
-      material: 'Material B'
-    }
-  ],
-  consumoMedioMensal: [
-    { mes: 'Janeiro', consumo: 250 },
-    { mes: 'Fevereiro', consumo: 300 }
-  ]
 };
 
 export default function MaterialsPage() {
