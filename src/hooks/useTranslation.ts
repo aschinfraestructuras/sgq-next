@@ -1,23 +1,16 @@
-import { useLanguage } from './useLanguage';
-import { translations } from '../i18n/translations';
+import { useCallback } from 'react';
+import { useRouter } from 'next/router';
 
-export const useTranslation = () => {
-  const { language } = useLanguage();
-  
-  const t = (key: string) => {
-    const keys = key.split('.');
-    let value: any = translations[language];
-    
-    for (const k of keys) {
-      if (value && typeof value === 'object') {
-        value = value[k];
-      } else {
-        return key; // Return the key if translation is not found
-      }
-    }
-    
-    return value || key;
-  };
+type TranslationKey = string;
+
+export function useTranslation() {
+  const { locale } = useRouter();
+
+  const t = useCallback((key: TranslationKey, params?: Record<string, string>) => {
+    // TODO: Implement proper translation logic
+    // For now, return the key as is
+    return key;
+  }, [locale]);
 
   return { t };
-}; 
+} 

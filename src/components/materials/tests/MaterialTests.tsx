@@ -22,7 +22,6 @@ import {
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 import type { Material, MaterialTest } from '@/types/materials';
-import { useTranslation } from '@/hooks/useTranslation';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -39,29 +38,27 @@ export default function MaterialTests({
   onViewTestDetails,
   onDownloadReport,
 }: MaterialTestsProps) {
-  const { t } = useTranslation();
-
   const getStatusConfig = (status: MaterialTest['status']) => {
     switch (status) {
       case 'passed':
         return {
           icon: <CheckCircleIcon className="h-5 w-5" />,
           color: 'success',
-          label: t('materials.tests.status.passed'),
+          label: 'Aprovado',
           className: 'bg-green-100 text-green-800'
         };
       case 'failed':
         return {
           icon: <XCircleIcon className="h-5 w-5" />,
           color: 'error',
-          label: t('materials.tests.status.failed'),
+          label: 'Reprovado',
           className: 'bg-red-100 text-red-800'
         };
       case 'in_progress':
         return {
           icon: <ArrowPathIcon className="h-5 w-5" />,
           color: 'warning',
-          label: t('materials.tests.status.inProgress'),
+          label: 'Em Progresso',
           className: 'bg-yellow-100 text-yellow-800'
         };
       case 'pending':
@@ -69,7 +66,7 @@ export default function MaterialTests({
         return {
           icon: <ClockIcon className="h-5 w-5" />,
           color: 'default',
-          label: t('materials.tests.status.pending'),
+          label: 'Pendente',
           className: 'bg-gray-100 text-gray-800'
         };
     }
@@ -80,10 +77,10 @@ export default function MaterialTests({
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-xl font-semibold text-gray-900">
-            {t('materials.tests.title')}
+            Testes do Material
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            {t('materials.tests.description')}
+            Gerencie os testes e resultados do material
           </p>
         </div>
         <Button
@@ -92,7 +89,7 @@ export default function MaterialTests({
           startIcon={<PlusIcon className="h-5 w-5" />}
           onClick={onAddTest}
         >
-          {t('materials.tests.add')}
+          Adicionar Teste
         </Button>
       </div>
 
@@ -100,12 +97,12 @@ export default function MaterialTests({
         <Table>
           <TableHead>
             <TableRow className="bg-gray-50">
-              <TableCell>{t('materials.tests.type')}</TableCell>
-              <TableCell>{t('materials.tests.date')}</TableCell>
-              <TableCell>{t('materials.tests.technician')}</TableCell>
-              <TableCell>{t('materials.tests.status')}</TableCell>
-              <TableCell>{t('materials.tests.results')}</TableCell>
-              <TableCell align="right">{t('materials.tests.actions')}</TableCell>
+              <TableCell>Tipo</TableCell>
+              <TableCell>Data</TableCell>
+              <TableCell>Técnico</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Resultados</TableCell>
+              <TableCell align="right">Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -145,7 +142,7 @@ export default function MaterialTests({
                   </TableCell>
                   <TableCell align="right">
                     <div className="flex justify-end space-x-2">
-                      <Tooltip title={t('materials.tests.view')}>
+                      <Tooltip title="Ver Detalhes">
                         <IconButton
                           size="small"
                           onClick={() => onViewTestDetails(test)}
@@ -154,7 +151,7 @@ export default function MaterialTests({
                         </IconButton>
                       </Tooltip>
                       {test.attachments && test.attachments.length > 0 && (
-                        <Tooltip title={t('materials.tests.download')}>
+                        <Tooltip title="Baixar Relatório">
                           <IconButton
                             size="small"
                             onClick={() => onDownloadReport(test)}
@@ -174,7 +171,7 @@ export default function MaterialTests({
                   <div className="text-gray-500">
                     <BeakerIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
                     <p className="text-sm">
-                      {t('materials.tests.empty')}
+                      Nenhum teste registrado
                     </p>
                     <Button
                       variant="text"
@@ -183,7 +180,7 @@ export default function MaterialTests({
                       onClick={onAddTest}
                       className="mt-2"
                     >
-                      {t('materials.tests.addFirst')}
+                      Adicionar Primeiro Teste
                     </Button>
                   </div>
                 </TableCell>
