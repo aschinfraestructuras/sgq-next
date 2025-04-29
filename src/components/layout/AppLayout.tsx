@@ -52,6 +52,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return null;
   }
 
+  const currentPath = pathname?.split('/').pop() || '';
+  const pageTitle = currentPath.charAt(0).toUpperCase() + currentPath.slice(1);
+
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
       <Toaster position="top-right" />
@@ -88,7 +91,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     </li>
                     <li>
                       <span className="text-gray-900 dark:text-white font-medium">
-                        {pathname?.split('/')?.pop()?.charAt(0)?.toUpperCase() ?? '' + (pathname?.split('/')?.pop()?.slice(1) ?? '')}
+                        {pageTitle}
                       </span>
                     </li>
                   </ol>
