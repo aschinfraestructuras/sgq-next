@@ -118,18 +118,19 @@ export interface ItemChecklist {
 }
 
 // Tipos de Usuário
-export type UserRole = 'admin' | 'manager' | 'auditor' | 'user';
+export type UserRole = 'admin' | 'user';
 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
-  department?: string;
   active: boolean;
   createdAt: Date;
   lastLogin?: Date;
   avatar?: string;
+  photoURL?: string | null;
+  displayName?: string | null;
 }
 
 // Tipos de Documento

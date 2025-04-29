@@ -111,22 +111,22 @@ const Sidebar = () => {
         <div className="flex-shrink-0 flex border-t border-indigo-800 p-4">
           <div className="flex items-center w-full">
             <div className="flex-shrink-0">
-              {user?.photoURL ? (
+              {user?.avatar ? (
                 <img
                   className="h-8 w-8 rounded-full"
-                  src={user.photoURL}
-                  alt={user.displayName || 'Usuário'}
+                  src={user.avatar}
+                  alt={user.name || 'Usuário'}
                 />
               ) : (
                 <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center">
                   <span className="text-white text-sm font-medium">
-                    {user?.displayName?.charAt(0) || 'U'}
+                    {user?.name?.charAt(0) || 'U'}
                   </span>
                 </div>
               )}
             </div>
             <div className="ml-3">
-              <p className="text-sm font-medium text-white">{user?.displayName || 'Usuário'}</p>
+              <p className="text-sm font-medium text-white">{user?.name || 'Usuário'}</p>
               <p className="text-xs text-indigo-300">{user?.email}</p>
             </div>
           </div>

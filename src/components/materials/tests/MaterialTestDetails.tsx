@@ -1,4 +1,4 @@
-import React from 'react';
+import { FC } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,6 +9,8 @@ import {
   Paper,
   Chip,
   Button,
+  Box,
+  Card,
 } from '@mui/material';
 import {
   XMarkIcon,
@@ -18,9 +20,10 @@ import {
   CalendarIcon,
   ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
-import type { MaterialTest } from '@/types/materials';
+import type { MaterialTest, TestResults, TestStatus } from '@/types/materials';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Download } from '@mui/icons-material';
 
 interface MaterialTestDetailsProps {
   test: MaterialTest;
@@ -29,162 +32,156 @@ interface MaterialTestDetailsProps {
   onDownload?: () => void;
 }
 
-export default function MaterialTestDetails({
-  test,
-  open,
-  onClose,
-  onDownload,
-}: MaterialTestDetailsProps) {
-  const getStatusConfig = (status: MaterialTest['status']) => {
-    switch (status) {
-      case 'passed':
-        return {
-          label: 'Aprovado',
-          className: 'bg-green-100 text-green-800'
-        };
-      case 'failed':
-        return {
-          label: 'Reprovado',
-          className: 'bg-red-100 text-red-800'
-        };
-      case 'in_progress':
-        return {
-          label: 'Em Progresso',
-          className: 'bg-yellow-100 text-yellow-800'
-        };
-      case 'pending':
-      default:
-        return {
-          label: 'Pendente',
-          className: 'bg-gray-100 text-gray-800'
-        };
-    }
-  };
+const getStatusColor = (status: TestStatus): 'default' | 'primary' | 'success' | 'error' => {
+  switch (status) {
+    case 'pending':
+      return 'default';
+    case 'in_progress':
+      return 'primary';
+    case 'passed':
+      return 'success';
+    case 'failed':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
 
-  const statusConfig = getStatusConfig(test.status);
+const MaterialTestDetails: FC<MaterialTestDetailsProps> = ({ test, open, onClose, onDownload }) => {
+  const statusColor = getStatusColor(test.status);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle className="flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <BeakerIcon className="h-6 w-6 text-gray-500" />
-          <Typography variant="h6">Detalhes do Teste</Typography>
-        </div>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 2 }
+      }}
+    >
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
+        <Typography variant="h6" component="h2">
+          Detalhes do Teste
+        </Typography>
         <IconButton onClick={onClose} size="small">
-          <XMarkIcon className="h-5 w-5" />
+          <XMarkIcon width={20} />
         </IconButton>
       </DialogTitle>
-
       <DialogContent>
         <Grid container spacing={3}>
-          <Grid component="div" item xs={12}>
-            <Paper className="p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <Typography variant="h6" className="mb-2">
-                    {test.type}
+          <Grid item xs={12}>
+            <Card sx={{ p: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <BeakerIcon width={20} />
+                    <Typography variant="subtitle1">Status</Typography>
+                  </Box>
+                  <Chip
+                    label={test.status}
+                    color={statusColor}
+                    size="small"
+                    sx={{ mt: 1 }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <UserIcon width={20} />
+                    <Typography variant="subtitle1">Técnico Responsável</Typography>
+                  </Box>
+                  <Typography color="text.secondary" sx={{ mt: 1 }}>
+                    {test.technician}
                   </Typography>
-                  <div className="flex items-center space-x-4 text-gray-600">
-                    <div className="flex items-center space-x-1">
-                      <CalendarIcon className="h-4 w-4" />
-                      <span>
-                        {format(new Date(test.date), "dd 'de' MMMM 'de' yyyy", {
-                          locale: ptBR,
-                        })}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <UserIcon className="h-4 w-4" />
-                      <span>{test.technician}</span>
-                    </div>
-                  </div>
-                </div>
-                <Chip
-                  label={statusConfig.label}
-                  className={statusConfig.className}
-                />
-              </div>
-            </Paper>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <CalendarIcon width={20} />
+                    <Typography variant="subtitle1">Data Prevista</Typography>
+                  </Box>
+                  <Typography color="text.secondary" sx={{ mt: 1 }}>
+                    {format(test.dueDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  </Typography>
+                </Grid>
+                {test.completionDate && (
+                  <Grid item xs={12} sm={6}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <CalendarIcon width={20} />
+                      <Typography variant="subtitle1">Data de Conclusão</Typography>
+                    </Box>
+                    <Typography color="text.secondary" sx={{ mt: 1 }}>
+                      {format(test.completionDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    </Typography>
+                  </Grid>
+                )}
+              </Grid>
+            </Card>
           </Grid>
 
-          <Grid component="div" item xs={12}>
-            <Paper className="p-4">
-              <Typography variant="subtitle1" className="font-medium mb-3">
-                <ClipboardDocumentListIcon className="h-5 w-5 inline-block mr-2" />
-                Resultados
-              </Typography>
-              <div className="space-y-2">
-                {Object.entries(test.results).map(([key, value]) => (
-                  <div key={key} className="flex justify-between border-b pb-2">
-                    <Typography variant="body2" className="font-medium">
-                      {key}:
-                    </Typography>
-                    <Typography variant="body2">{String(value)}</Typography>
-                  </div>
-                ))}
-              </div>
-            </Paper>
-          </Grid>
+          {test.results && (
+            <Grid item xs={12}>
+              <Card sx={{ p: 2 }}>
+                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                  <ClipboardDocumentListIcon width={20} />
+                  <Typography variant="subtitle1">Resultados</Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  {Object.entries(test.results).map(([parameter, value]) => (
+                    <Grid item xs={12} sm={6} key={parameter}>
+                      <Typography variant="subtitle2">{parameter}</Typography>
+                      <Typography color="text.secondary">
+                        {value.toString()}
+                      </Typography>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Card>
+            </Grid>
+          )}
 
           {test.notes && (
-            <Grid component="div" item xs={12}>
-              <Paper className="p-4">
-                <Typography variant="subtitle1" className="font-medium mb-2">
-                  Observações
-                </Typography>
-                <Typography variant="body2" className="text-gray-600">
+            <Grid item xs={12}>
+              <Card sx={{ p: 2 }}>
+                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                  <ClipboardDocumentListIcon width={20} />
+                  <Typography variant="subtitle1">Observações</Typography>
+                </Box>
+                <Typography color="text.secondary">
                   {test.notes}
                 </Typography>
-              </Paper>
+              </Card>
             </Grid>
           )}
 
           {test.attachments && test.attachments.length > 0 && (
-            <Grid component="div" item xs={12}>
-              <Paper className="p-4">
-                <Typography variant="subtitle1" className="font-medium mb-3">
-                  Anexos
-                </Typography>
-                <div className="space-y-2">
+            <Grid item xs={12}>
+              <Card sx={{ p: 2 }}>
+                <Box display="flex" alignItems="center" gap={1} mb={2}>
+                  <DocumentArrowDownIcon width={20} />
+                  <Typography variant="subtitle1">Anexos</Typography>
+                </Box>
+                <Grid container spacing={1}>
                   {test.attachments.map((attachment, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <Typography variant="body2">
-                        {`Anexo ${index + 1}`}
-                      </Typography>
+                    <Grid item xs={12} key={index}>
                       <Button
-                        size="small"
-                        startIcon={<DocumentArrowDownIcon className="h-4 w-4" />}
+                        variant="outlined"
+                        startIcon={<Download />}
                         onClick={onDownload}
+                        fullWidth
+                        sx={{ justifyContent: 'flex-start' }}
                       >
-                        Download
+                        {attachment.name}
                       </Button>
-                    </div>
+                    </Grid>
                   ))}
-                </div>
-              </Paper>
+                </Grid>
+              </Card>
             </Grid>
           )}
-
-          <Grid component="div" item xs={12}>
-            <Paper className="p-4">
-              <Typography variant="subtitle2" className="text-gray-500">
-                Criado em:{' '}
-                {format(new Date(test.createdAt), "dd/MM/yyyy 'às' HH:mm", {
-                  locale: ptBR,
-                })}
-                {' por '} {test.createdBy}
-              </Typography>
-              <Typography variant="subtitle2" className="text-gray-500">
-                Última atualização:{' '}
-                {format(new Date(test.updatedAt), "dd/MM/yyyy 'às' HH:mm", {
-                  locale: ptBR,
-                })}
-                {' por '} {test.updatedBy}
-              </Typography>
-            </Paper>
-          </Grid>
         </Grid>
       </DialogContent>
     </Dialog>
   );
-} 
+};
+
+export default MaterialTestDetails; 

@@ -1,6 +1,10 @@
 import { FirebaseError } from 'firebase/app';
 
-export function handleFirebaseError(error: FirebaseError): string {
+export function handleFirebaseError(error: FirebaseError | Error): string {
+  if (!isFirebaseError(error)) {
+    return error.message;
+  }
+
   switch (error.code) {
     case 'auth/email-already-in-use':
       return 'Este e-mail já está em uso.';

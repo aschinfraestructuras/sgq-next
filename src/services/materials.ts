@@ -18,7 +18,7 @@ import {
 import { db } from '@/lib/firebase';
 import type { Material, MaterialFilter, MaterialStats } from '@/types/materials';
 import { addHistoryEntry } from './materialHistory';
-import { getCurrentUser } from './auth.service';
+import { getCurrentUser } from './auth';
 
 const COLLECTION = 'materials';
 

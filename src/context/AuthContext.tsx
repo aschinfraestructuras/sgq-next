@@ -1,9 +1,10 @@
 'use client';
 
 import React, { createContext, useContext, useState } from 'react';
+import type { User } from '@/types';
 
 interface AuthContextType {
-  user: any | null;
+  user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -12,7 +13,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
 
   const signIn = async (email: string, password: string) => {

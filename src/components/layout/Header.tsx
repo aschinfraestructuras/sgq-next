@@ -117,13 +117,13 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 <img
                   className="h-8 w-8 rounded-full"
                   src={user.photoURL}
-                  alt={user.displayName || 'Usuário'}
+                  alt={user?.displayName || user?.name || 'Usuário'}
                 />
               ) : (
                 <UserCircleIcon className="h-8 w-8 text-gray-400" />
               )}
               <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {user?.displayName || 'Usuário'}
+                {user?.displayName || user?.name || 'Usuário'}
               </span>
             </Menu.Button>
             <Transition

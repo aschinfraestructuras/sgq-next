@@ -5,6 +5,18 @@ export type CertificationType = 'quality' | 'safety' | 'environmental' | 'techni
 export type TestStatus = 'pending' | 'in_progress' | 'passed' | 'failed';
 export type BatchStatus = 'in_stock' | 'in_use' | 'consumed' | 'expired' | 'quarantine';
 
+export interface TestResults {
+  parameter: string;
+  value: number | string;
+  unit?: string;
+  min?: number;
+  max?: number;
+  expected?: string | number;
+  tolerance?: number;
+  isWithinSpec: boolean;
+  notes?: string;
+}
+
 export interface MaterialCertification {
   id: string;
   type: CertificationType;
@@ -20,17 +32,18 @@ export interface MaterialCertification {
 export interface MaterialTest {
   id: string;
   materialId: string;
+  batchId?: string;
   type: string;
-  date: string;
+  description: string;
   status: TestStatus;
-  results: Record<string, any>;
-  technician: string;
+  dueDate: Date;
+  completedDate?: Date;
+  results: TestResults[];
+  technician?: string;
   notes?: string;
   attachments?: string[];
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string;
-  updatedBy: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface MaterialBatch {

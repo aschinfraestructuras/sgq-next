@@ -14,8 +14,9 @@ import {
   IconButton,
 } from '@mui/material';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import type { MaterialTest, TestStatus } from '@/types/materials';
+import type { MaterialTest, TestStatus, TestResults } from '@/types/materials';
 import { getCurrentUser } from '@/services/auth';
+import { User } from 'firebase/auth';
 
 interface MaterialTestFormProps {
   materialId: string;
@@ -25,6 +26,8 @@ interface MaterialTestFormProps {
   initialData?: MaterialTest;
 }
 
+type MaterialTestFormData = Omit<MaterialTest, 'id' | 'createdAt' | 'updatedAt'>;
+
 export default function MaterialTestForm({
   materialId,
   open,
@@ -32,8 +35,11 @@ export default function MaterialTestForm({
   onSubmit,
   initialData
 }: MaterialTestFormProps) {
-  const [formData, setFormData] = useState<Partial<MaterialTest>>(() => {
-    if (initialData) return initialData;
+  const [formData, setFormData] = useState<MaterialTestFormData>(() => {
+    if (initialData) {
+      const { id, createdAt, updatedAt, ...rest } = initialData;
+      return rest;
+    }
 
     const now = new Date().toISOString();
     return {
@@ -41,7 +47,7 @@ export default function MaterialTestForm({
       type: '',
       date: now.split('T')[0],
       status: 'pending' as TestStatus,
-      results: {},
+      results: {} as TestResults,
       technician: '',
       notes: '',
       attachments: [],
@@ -53,7 +59,10 @@ export default function MaterialTestForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (field: keyof MaterialTest, value: any) => {
+  const handleChange = <K extends keyof MaterialTestFormData>(
+    field: K,
+    value: MaterialTestFormData[K]
+  ) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -66,16 +75,16 @@ export default function MaterialTestForm({
     setError(null);
 
     try {
-      const user = await getCurrentUser();
+      const user = await getCurrentUser() as User;
       if (!user) {
         throw new Error('Usuário não autenticado');
       }
 
-      const testData = {
+      const testData: MaterialTestFormData = {
         ...formData,
         createdBy: initialData?.createdBy || user.uid,
         updatedBy: user.uid,
-      } as Omit<MaterialTest, 'id' | 'createdAt' | 'updatedAt'>;
+      };
 
       await onSubmit(testData);
       onClose();
@@ -98,7 +107,7 @@ export default function MaterialTestForm({
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid item component="div" xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Tipo de Teste"
@@ -108,7 +117,7 @@ export default function MaterialTestForm({
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item component="div" xs={12} sm={6}>
               <TextField
                 fullWidth
                 type="date"
@@ -120,7 +129,7 @@ export default function MaterialTestForm({
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item component="div" xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Técnico Responsável"
@@ -130,7 +139,7 @@ export default function MaterialTestForm({
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item component="div" xs={12} sm={6}>
               <FormControl fullWidth required>
                 <InputLabel>Status</InputLabel>
                 <Select
@@ -146,7 +155,7 @@ export default function MaterialTestForm({
               </FormControl>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid item component="div" xs={12}>
               <TextField
                 fullWidth
                 label="Resultados"
@@ -155,7 +164,7 @@ export default function MaterialTestForm({
                 value={JSON.stringify(formData.results, null, 2)}
                 onChange={(e) => {
                   try {
-                    const results = JSON.parse(e.target.value);
+                    const results = JSON.parse(e.target.value) as TestResults;
                     handleChange('results', results);
                   } catch {
                     // Ignore invalid JSON
@@ -165,7 +174,7 @@ export default function MaterialTestForm({
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid item component="div" xs={12}>
               <TextField
                 fullWidth
                 label="Observações"

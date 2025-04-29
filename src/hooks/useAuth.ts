@@ -1,16 +1,10 @@
 'use client';
 
 import { create } from 'zustand';
-import { 
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  updateProfile,
-  onAuthStateChanged
-} from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
-import { User } from '@/types/firebase';
-import { handleFirebaseError } from '@/lib/firebase/utils';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import type { User } from '@/types';
+import { login, logout, register, updateUserProfile } from '@/services/auth';
 
 interface AuthState {
   user: User | null;
@@ -20,7 +14,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
-  updateUserProfile: (displayName: string) => Promise<void>;
+  updateUserProfile: (data: Partial<User>) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -34,9 +28,10 @@ export const useAuth = create<AuthState>((set) => ({
   login: async (email: string, password: string) => {
     try {
       set({ loading: true, error: null });
-      await signInWithEmailAndPassword(auth, email, password);
+      const user = await login(email, password);
+      set({ user, isAuthenticated: true });
     } catch (error: any) {
-      set({ error: handleFirebaseError(error) });
+      set({ error: error.message });
     } finally {
       set({ loading: false });
     }
@@ -45,10 +40,10 @@ export const useAuth = create<AuthState>((set) => ({
   register: async (email: string, password: string, name: string) => {
     try {
       set({ loading: true, error: null });
-      const { user } = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(user, { displayName: name });
+      const user = await register(email, password, name);
+      set({ user, isAuthenticated: true });
     } catch (error: any) {
-      set({ error: handleFirebaseError(error) });
+      set({ error: error.message });
     } finally {
       set({ loading: false });
     }
@@ -57,24 +52,22 @@ export const useAuth = create<AuthState>((set) => ({
   logout: async () => {
     try {
       set({ loading: true, error: null });
-      await signOut(auth);
+      await logout();
+      set({ user: null, isAuthenticated: false });
     } catch (error: any) {
-      set({ error: handleFirebaseError(error) });
+      set({ error: error.message });
     } finally {
       set({ loading: false });
     }
   },
 
-  updateUserProfile: async (displayName: string) => {
+  updateUserProfile: async (data: Partial<User>) => {
     try {
       set({ loading: true, error: null });
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        await updateProfile(currentUser, { displayName });
-        set({ user: auth.currentUser as User });
-      }
+      const updatedUser = await updateUserProfile(data);
+      set({ user: updatedUser });
     } catch (error: any) {
-      set({ error: handleFirebaseError(error) });
+      set({ error: error.message });
     } finally {
       set({ loading: false });
     }
@@ -86,11 +79,29 @@ export const useAuth = create<AuthState>((set) => ({
 
 // Initialize auth state listener
 if (typeof window !== 'undefined') {
-  onAuthStateChanged(auth, (user) => {
-    useAuth.setState({ 
-      user: user as User | null,
-      isAuthenticated: !!user,
-      loading: false
-    });
+  onAuthStateChanged(auth, (firebaseUser) => {
+    if (firebaseUser) {
+      const user: User = {
+        id: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        name: firebaseUser.displayName || '',
+        role: 'user',
+        active: true,
+        createdAt: new Date(firebaseUser.metadata.creationTime || ''),
+        lastLogin: new Date(firebaseUser.metadata.lastSignInTime || ''),
+        avatar: firebaseUser.photoURL || undefined
+      };
+      useAuth.setState({ 
+        user,
+        isAuthenticated: true,
+        loading: false
+      });
+    } else {
+      useAuth.setState({ 
+        user: null,
+        isAuthenticated: false,
+        loading: false
+      });
+    }
   });
 }
