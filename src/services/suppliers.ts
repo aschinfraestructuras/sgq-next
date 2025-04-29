@@ -1,96 +1,88 @@
-import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, query, where, DocumentData, QueryDocumentSnapshot, arrayUnion } from 'firebase/firestore';
-import type { Supplier, SupplierFilter, SupplierStats, SupplierEvaluation, SupplierRating } from '@/types/suppliers';
+import { db } from '@/lib/firebase/config';
+import { 
+  collection, 
+  doc,
+  getDoc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  arrayUnion
+} from 'firebase/firestore';
+import type { 
+  Supplier, 
+  SupplierFilter, 
+  SupplierStats, 
+  SupplierEvaluation, 
+  SupplierRating,
+  SupplierCategory,
+  SupplierStatus
+} from '@/types/suppliers';
 
-export async function getSuppliers(filter?: SupplierFilter): Promise<Supplier[]> {
-  try {
-    let baseQuery = collection(db, 'suppliers');
-    let constraints = [];
+const COLLECTION = 'suppliers';
 
-    if (filter?.search) {
-      constraints.push(
-        where('name', '>=', filter.search),
-        where('name', '<=', filter.search + '\uf8ff')
-      );
-    }
+export async function getSuppliers(options?: {
+  status?: SupplierStatus;
+  limit?: number;
+}): Promise<Supplier[]> {
+  const suppliersRef = collection(db, COLLECTION);
+  let q = query(suppliersRef);
 
-    if (filter?.category) {
-      constraints.push(where('category', '==', filter.category));
-    }
-
-    if (filter?.status) {
-      constraints.push(where('status', '==', filter.status));
-    }
-
-    if (filter?.rating) {
-      constraints.push(where('averageRating', '>=', filter.rating));
-    }
-
-    const q = query(baseQuery, ...constraints);
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier));
-  } catch (error) {
-    console.error('Error fetching suppliers:', error);
-    throw error;
+  if (options?.status) {
+    q = query(q, where('status', '==', options.status));
   }
+
+  q = query(q, orderBy('createdAt', 'desc'));
+
+  if (options?.limit) {
+    q = query(q, limit(options.limit));
+  }
+
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as Supplier[];
 }
 
-export async function getSupplier(id: string): Promise<Supplier | null> {
-  try {
-    const docRef = doc(db, 'suppliers', id);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) return null;
-    return { id: docSnap.id, ...docSnap.data() } as Supplier;
-  } catch (error) {
-    console.error('Error fetching supplier:', error);
-    throw error;
+export async function getSupplier(id: string): Promise<Supplier> {
+  const docRef = doc(db, COLLECTION, id);
+  const docSnap = await getDoc(docRef);
+  
+  if (!docSnap.exists()) {
+    throw new Error('Supplier not found');
   }
+
+  return {
+    id: docSnap.id,
+    ...docSnap.data()
+  } as Supplier;
 }
 
-export async function createSupplier(supplier: Omit<Supplier, 'id'>): Promise<Supplier> {
-  try {
-    const now = new Date().toISOString();
-    const newSupplier = {
-      ...supplier,
-      createdAt: now,
-      updatedAt: now,
-      evaluations: []
-    };
-
-    const suppliersRef = collection(db, 'suppliers');
-    const docRef = await addDoc(suppliersRef, newSupplier);
-    return { id: docRef.id, ...newSupplier };
-  } catch (error) {
-    console.error('Error creating supplier:', error);
-    throw error;
-  }
+export async function createSupplier(data: Omit<Supplier, 'id'>): Promise<string> {
+  const docRef = await addDoc(collection(db, COLLECTION), {
+    ...data,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
+  return docRef.id;
 }
 
-export async function updateSupplier(id: string, updates: Partial<Supplier>): Promise<Supplier> {
-  try {
-    const now = new Date().toISOString();
-    const updatedSupplier = {
-      ...updates,
-      updatedAt: now
-    };
-
-    const docRef = doc(db, 'suppliers', id);
-    await updateDoc(docRef, updatedSupplier);
-    return { id, ...updatedSupplier } as Supplier;
-  } catch (error) {
-    console.error('Error updating supplier:', error);
-    throw error;
-  }
+export async function updateSupplier(id: string, data: Partial<Supplier>): Promise<void> {
+  const docRef = doc(db, COLLECTION, id);
+  await updateDoc(docRef, {
+    ...data,
+    updatedAt: new Date().toISOString()
+  });
 }
 
 export async function deleteSupplier(id: string): Promise<void> {
-  try {
-    const docRef = doc(db, 'suppliers', id);
-    await deleteDoc(docRef);
-  } catch (error) {
-    console.error('Error deleting supplier:', error);
-    throw error;
-  }
+  const docRef = doc(db, COLLECTION, id);
+  await deleteDoc(docRef);
 }
 
 export async function addSupplierEvaluation(
@@ -105,7 +97,7 @@ export async function addSupplierEvaluation(
       date: now
     };
 
-    const docRef = doc(db, 'suppliers', supplierId);
+    const docRef = doc(db, COLLECTION, supplierId);
     await updateDoc(docRef, {
       evaluations: arrayUnion(newEvaluation)
     });
@@ -119,14 +111,18 @@ export async function addSupplierEvaluation(
 
 export async function getSupplierStats(): Promise<SupplierStats> {
   try {
-    const suppliersRef = collection(db, 'suppliers');
+    const suppliersRef = collection(db, COLLECTION);
     const snapshot = await getDocs(suppliersRef);
-    const suppliers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as Supplier);
+    const suppliers = snapshot.docs.map(doc => ({ 
+      id: doc.id, 
+      ...doc.data(),
+      evaluations: doc.data().evaluations || []
+    })) as (Supplier & { evaluations: SupplierEvaluation[] })[];
 
     const stats: SupplierStats = {
       total: suppliers.length,
-      byCategory: {} as Record<Supplier['category'], number>,
-      byStatus: {} as Record<Supplier['status'], number>,
+      byCategory: {} as Record<SupplierCategory, number>,
+      byStatus: {} as Record<SupplierStatus, number>,
       byRating: {} as Record<number, number>,
       withPendingEvaluations: 0,
       withExpiringCertifications: 0
@@ -134,7 +130,10 @@ export async function getSupplierStats(): Promise<SupplierStats> {
 
     suppliers.forEach(supplier => {
       // Count by category
-      stats.byCategory[supplier.category] = (stats.byCategory[supplier.category] || 0) + 1;
+      supplier.categories.forEach(category => {
+        const cat = category as SupplierCategory;
+        stats.byCategory[cat] = (stats.byCategory[cat] || 0) + 1;
+      });
       
       // Count by status
       stats.byStatus[supplier.status] = (stats.byStatus[supplier.status] || 0) + 1;
@@ -153,9 +152,6 @@ export async function getSupplierStats(): Promise<SupplierStats> {
       if (!lastEval || new Date(lastEval.date).getTime() < Date.now() - 180 * 24 * 60 * 60 * 1000) {
         stats.withPendingEvaluations++;
       }
-
-      // Aqui você pode adicionar mais lógica para certificações expirando
-      // baseado na sua estrutura de dados específica
     });
 
     return stats;

@@ -9,13 +9,13 @@ import {
   query,
   where,
   orderBy,
-  limit,
+  limit as firestoreLimit,
   Timestamp,
   DocumentData,
   CollectionReference,
   Query,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/config';
 import type { 
   Material, 
   MaterialFilter, 
@@ -76,74 +76,40 @@ export async function getMaterials(filter?: MaterialFilter): Promise<Material[]>
   }
 }
 
-export async function getMaterial(id: string) {
-  try {
-    const docRef = doc(db, COLLECTION, id);
-    const docSnap = await getDoc(docRef);
-    
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      const categoryHierarchy = await getCategoryHierarchy(data.categoryId);
-      
-      return {
-        id: docSnap.id,
-        ...data,
-        category: categoryHierarchy[categoryHierarchy.length - 1],
-        categoryPath: categoryHierarchy
-      } as Material;
-    }
-    
+export async function getMaterial(id: string): Promise<Material> {
+  const docRef = doc(db, COLLECTION, id);
+  const docSnap = await getDoc(docRef);
+  
+  if (!docSnap.exists()) {
     throw new Error('Material not found');
-  } catch (error) {
-    console.error('Error getting material:', error);
-    throw error;
   }
+
+  return {
+    id: docSnap.id,
+    ...docSnap.data()
+  } as Material;
 }
 
-export async function createMaterial(data: Omit<Material, 'id'>) {
-  try {
-    // Validate category exists
-    await getCategory(data.categoryId);
-    
-    const docRef = await addDoc(collection(db, COLLECTION), {
-      ...data,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
-    });
-    
-    return docRef.id;
-  } catch (error) {
-    console.error('Error creating material:', error);
-    throw error;
-  }
+export async function createMaterial(data: Omit<Material, 'id'>): Promise<string> {
+  const docRef = await addDoc(collection(db, COLLECTION), {
+    ...data,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
+  return docRef.id;
 }
 
-export async function updateMaterial(id: string, data: Partial<Material>) {
-  try {
-    // If category is being updated, validate it exists
-    if (data.categoryId) {
-      await getCategory(data.categoryId);
-    }
-    
-    const docRef = doc(db, COLLECTION, id);
-    await updateDoc(docRef, {
-      ...data,
-      updatedAt: Timestamp.now()
-    });
-  } catch (error) {
-    console.error('Error updating material:', error);
-    throw error;
-  }
+export async function updateMaterial(id: string, data: Partial<Material>): Promise<void> {
+  const docRef = doc(db, COLLECTION, id);
+  await updateDoc(docRef, {
+    ...data,
+    updatedAt: new Date().toISOString()
+  });
 }
 
-export async function deleteMaterial(id: string) {
-  try {
-    const docRef = doc(db, COLLECTION, id);
-    await deleteDoc(docRef);
-  } catch (error) {
-    console.error('Error deleting material:', error);
-    throw error;
-  }
+export async function deleteMaterial(id: string): Promise<void> {
+  const docRef = doc(db, COLLECTION, id);
+  await deleteDoc(docRef);
 }
 
 export async function getMaterialStats(): Promise<MaterialStats> {

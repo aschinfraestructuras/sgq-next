@@ -1,0 +1,90 @@
+{
+  "title": "Materials",
+  "description": "Materials and inventory management",
+  "tabs": {
+    "dashboard": "Dashboard",
+    "list": "List",
+    "new": "New Material"
+  },
+  "form": {
+    "name": "Name",
+    "description": "Description",
+    "type": "Type",
+    "category": "Category",
+    "cost": "Cost",
+    "unit": "Unit",
+    "currentStock": "Current Stock",
+    "minStock": "Minimum Stock",
+    "maxStock": "Maximum Stock",
+    "reorderPoint": "Reorder Point",
+    "leadTime": "Lead Time",
+    "location": "Location",
+    "status": "Status",
+    "specifications": "Specifications",
+    "success": "Material saved successfully",
+    "error": "Error saving material"
+  },
+  "types": {
+    "raw": "Raw Material",
+    "component": "Component",
+    "finished": "Finished Product"
+  },
+  "status": {
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive",
+    "discontinued": "Discontinued"
+  },
+  "movements": {
+    "entrada": "Entry",
+    "saida": "Exit",
+    "ajuste": "Adjustment",
+    "teste": "Test"
+  },
+  "tests": {
+    "status": {
+      "pending": "Pending",
+      "passed": "Passed",
+      "failed": "Failed"
+    }
+  },
+  "confirmDelete": "Are you sure you want to delete this material?",
+  "deleteSuccess": "Material deleted successfully",
+  "deleteError": "Error deleting material",
+  "search": "Search materials...",
+  "filter": "Filter",
+  "noResults": "No materials found",
+  "stock": "Stock",
+  "actions": "Actions",
+  "category": "Category",
+  "supplier": "Supplier",
+  "certifications": "Certifications",
+  "history": "History",
+  "details": "Details",
+  "edit": "Edit",
+  "delete": "Delete",
+  "view": "View",
+  "add": "Add",
+  "save": "Save",
+  "cancel": "Cancel",
+  "reset": "Reset",
+  "loading": "Loading...",
+  "error": "Error loading data",
+  "dashboard": {
+    "totalMaterials": "Total Materials",
+    "lowStock": "Low Stock",
+    "pendingTests": "Pending Tests",
+    "expiringCertifications": "Expiring Certifications",
+    "totalValue": "Total Value",
+    "stockTurnover": "Stock Turnover",
+    "averageLeadTime": "Average Lead Time",
+    "inStock": "In Stock",
+    "turnoverRate": "Turnover Rate",
+    "byCategory": "By Category",
+    "byStatus": "By Status",
+    "recentMovements": "Recent Movements",
+    "topSuppliers": "Top Suppliers",
+    "inventoryHealth": "Inventory Health",
+    "qualityMetrics": "Quality Metrics"
+  }
+} 

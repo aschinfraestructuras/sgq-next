@@ -11,8 +11,9 @@ import {
   Timestamp,
   DocumentData,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase/config';
 import type { Material } from '@/types/material';
+import type { MaterialHistory } from '@/types/materials';
 
 export interface MaterialHistoryEntry {
   id: string;
@@ -29,25 +30,27 @@ export interface MaterialHistoryEntry {
 
 const COLLECTION = 'material_history';
 
-export const addHistoryEntry = async (entry: Omit<MaterialHistoryEntry, 'id' | 'timestamp'>): Promise<MaterialHistoryEntry> => {
-  try {
-    const historyRef = collection(db, COLLECTION);
-    const now = Timestamp.now();
-    
-    const docRef = await addDoc(historyRef, {
-      ...entry,
-      timestamp: now
-    });
+export const addHistoryEntry = async (materialId: string, entry: Omit<MaterialHistory, 'id' | 'createdAt'>): Promise<void> => {
+  const historyCollection = collection(db, 'materials', materialId, 'history');
+  await addDoc(historyCollection, {
+    ...entry,
+    createdAt: new Date().toISOString()
+  });
+};
 
-    return {
-      id: docRef.id,
-      ...entry,
-      timestamp: now.toDate().toISOString()
-    };
-  } catch (error) {
-    console.error('Error adding history entry:', error);
-    throw error;
-  }
+export const getHistoryEntries = async (materialId: string, limitCount = 10): Promise<MaterialHistory[]> => {
+  const historyCollection = collection(db, 'materials', materialId, 'history');
+  const q = query(
+    historyCollection,
+    orderBy('createdAt', 'desc'),
+    limitQuery(limitCount)
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  })) as MaterialHistory[];
 };
 
 export const getMaterialHistory = async (materialId: string, limit?: number): Promise<MaterialHistoryEntry[]> => {

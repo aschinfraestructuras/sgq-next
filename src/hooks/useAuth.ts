@@ -33,8 +33,12 @@ export const useAuth = create<AuthState>((set) => ({
       set({ loading: true, error: null });
       const user = await login(email, password);
       set({ user, isAuthenticated: true });
-    } catch (error: any) {
-      set({ error: error.message });
+    } catch (error) {
+      if (error instanceof Error) {
+        set({ error: error.message });
+      } else {
+        set({ error: 'An unexpected error occurred' });
+      }
     } finally {
       set({ loading: false });
     }
@@ -45,8 +49,12 @@ export const useAuth = create<AuthState>((set) => ({
       set({ loading: true, error: null });
       const user = await register(email, password, name);
       set({ user, isAuthenticated: true });
-    } catch (error: any) {
-      set({ error: error.message });
+    } catch (error) {
+      if (error instanceof Error) {
+        set({ error: error.message });
+      } else {
+        set({ error: 'An unexpected error occurred' });
+      }
     } finally {
       set({ loading: false });
     }
@@ -57,8 +65,12 @@ export const useAuth = create<AuthState>((set) => ({
       set({ loading: true, error: null });
       await logout();
       set({ user: null, isAuthenticated: false });
-    } catch (error: any) {
-      set({ error: error.message });
+    } catch (error) {
+      if (error instanceof Error) {
+        set({ error: error.message });
+      } else {
+        set({ error: 'An unexpected error occurred' });
+      }
     } finally {
       set({ loading: false });
     }
@@ -69,8 +81,12 @@ export const useAuth = create<AuthState>((set) => ({
       set({ loading: true, error: null });
       const updatedUser = await updateUserProfile(data);
       set({ user: updatedUser });
-    } catch (error: any) {
-      set({ error: error.message });
+    } catch (error) {
+      if (error instanceof Error) {
+        set({ error: error.message });
+      } else {
+        set({ error: 'An unexpected error occurred' });
+      }
     } finally {
       set({ loading: false });
     }

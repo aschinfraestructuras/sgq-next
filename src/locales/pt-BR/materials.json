@@ -1,0 +1,223 @@
+{
+  "title": "Materiais",
+  "description": "Gerenciamento de materiais e estoque",
+  "tabs": {
+    "dashboard": "Dashboard",
+    "list": "Lista",
+    "new": "Novo Material",
+    "all": "Todos",
+    "active": "Ativos",
+    "inactive": "Inativos",
+    "allTitle": "Todos os Materiais",
+    "activeTitle": "Materiais Ativos",
+    "inactiveTitle": "Materiais Inativos"
+  },
+  "form": {
+    "name": "Nome",
+    "description": "Descrição",
+    "type": "Tipo",
+    "category": "Categoria",
+    "cost": "Custo",
+    "unit": "Unidade",
+    "currentStock": "Estoque Atual",
+    "minStock": "Estoque Mínimo",
+    "maxStock": "Estoque Máximo",
+    "reorderPoint": "Ponto de Pedido",
+    "leadTime": "Tempo de Entrega",
+    "location": "Localização",
+    "status": "Status",
+    "specifications": "Especificações",
+    "success": "Material salvo com sucesso",
+    "error": "Erro ao salvar material"
+  },
+  "types": {
+    "raw": "Matéria Prima",
+    "component": "Componente",
+    "finished": "Produto Final"
+  },
+  "status": {
+    "all": "Todos",
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "discontinued": "Descontinuado"
+  },
+  "movements": {
+    "entrada": "Entrada",
+    "saida": "Saída",
+    "ajuste": "Ajuste",
+    "teste": "Teste"
+  },
+  "tests": {
+    "title": "Testes",
+    "description": "Gerenciamento de testes de materiais",
+    "tabs": {
+      "list": "Lista de Testes",
+      "results": "Resultados",
+      "analytics": "Análises",
+      "listDescription": "Visualize e gerencie todos os testes de materiais",
+      "resultsDescription": "Acompanhe os resultados dos testes realizados",
+      "analyticsDescription": "Análises e estatísticas dos testes de materiais"
+    },
+    "status": {
+      "pending": "Pendente",
+      "passed": "Aprovado",
+      "failed": "Reprovado"
+    }
+  },
+  "confirmDelete": "Tem certeza que deseja excluir este material?",
+  "deleteSuccess": "Material excluído com sucesso",
+  "deleteError": "Erro ao excluir material",
+  "search": "Buscar materiais...",
+  "filter": "Filtrar",
+  "noResults": "Nenhum material encontrado",
+  "stock": "Estoque",
+  "actions": "Ações",
+  "category": "Categoria",
+  "supplier": "Fornecedor",
+  "certifications": {
+    "title": "Certificações",
+    "description": "Gerenciamento de certificações de materiais"
+  },
+  "traceability": {
+    "title": "Rastreabilidade",
+    "description": "Rastreamento completo da cadeia de materiais"
+  },
+  "categories": {
+    "title": "Categorias",
+    "description": "Organização e classificação de materiais"
+  },
+  "inventory": {
+    "title": "Inventário",
+    "description": "Controle de estoque e movimentações",
+    "tabs": {
+      "stock": "Estoque",
+      "movements": "Movimentações",
+      "batches": "Lotes",
+      "stockDescription": "Visualize o estoque atual de todos os materiais",
+      "movementsDescription": "Acompanhe todas as movimentações de entrada e saída",
+      "batchesDescription": "Gerencie lotes e datas de validade"
+    }
+  },
+  "history": "Histórico",
+  "details": "Detalhes",
+  "edit": "Editar",
+  "delete": "Excluir",
+  "view": "Visualizar",
+  "add": "Adicionar",
+  "save": "Salvar",
+  "cancel": "Cancelar",
+  "reset": "Limpar",
+  "loading": "Carregando...",
+  "error": "Erro ao carregar dados",
+  "dashboard": {
+    "description": "Visão geral do sistema de materiais",
+    "totalMaterials": "Total de Materiais",
+    "lowStock": "Estoque Baixo",
+    "pendingTests": "Testes Pendentes",
+    "expiringCertifications": "Certificações Expirando",
+    "totalValue": "Valor Total",
+    "stockTurnover": "Giro de Estoque",
+    "averageLeadTime": "Tempo Médio de Entrega",
+    "inStock": "Em Estoque",
+    "turnoverRate": "Taxa de Rotação",
+    "byCategory": "Por Categoria",
+    "byStatus": "Por Status",
+    "recentMovements": "Movimentações Recentes",
+    "topSuppliers": "Principais Fornecedores",
+    "inventoryHealth": "Saúde do Estoque",
+    "qualityMetrics": "Métricas de Qualidade"
+  },
+  "reports": {
+    "title": "Relatórios de Materiais",
+    "description": "Geração e visualização de relatórios detalhados",
+    "selectAndGenerate": "Selecione os filtros e gere um relatório",
+    "generatedOn": "Gerado em",
+    "period": "Período",
+    "filters": {
+      "reportType": "Tipo de Relatório",
+      "materialType": "Tipo de Material",
+      "category": "Categoria",
+      "status": "Status",
+      "startDate": "Data Inicial",
+      "endDate": "Data Final"
+    },
+    "types": {
+      "stock": "Estoque",
+      "stockDescription": "Relatório detalhado do estoque atual",
+      "movements": "Movimentações",
+      "movementsDescription": "Histórico de movimentações de entrada e saída",
+      "tests": "Testes",
+      "testsDescription": "Resultados e estatísticas de testes",
+      "certifications": "Certificações",
+      "certificationsDescription": "Status e validade das certificações",
+      "cost": "Custos",
+      "costDescription": "Análise de custos e valores de materiais"
+    },
+    "summary": {
+      "totalMaterials": "Total de Materiais",
+      "totalValue": "Valor Total",
+      "lowStock": "Estoque Baixo",
+      "outOfStock": "Sem Estoque",
+      "totalMovements": "Total de Movimentações",
+      "entries": "Entradas",
+      "exits": "Saídas",
+      "adjustments": "Ajustes",
+      "totalTests": "Total de Testes",
+      "passed": "Aprovados",
+      "failed": "Reprovados",
+      "pending": "Pendentes",
+      "totalCertifications": "Total de Certificações",
+      "valid": "Válidas",
+      "expired": "Expiradas",
+      "expiringSoon": "Expirando em 30 dias",
+      "averageCost": "Custo Médio",
+      "highestValue": "Maior Valor",
+      "lowestValue": "Menor Valor"
+    },
+    "table": {
+      "name": "Nome",
+      "type": "Tipo",
+      "category": "Categoria",
+      "stock": "Estoque",
+      "minStock": "Estoque Mínimo",
+      "maxStock": "Estoque Máximo",
+      "status": "Status",
+      "location": "Localização",
+      "date": "Data",
+      "material": "Material",
+      "quantity": "Quantidade",
+      "document": "Documento",
+      "reason": "Motivo",
+      "responsible": "Responsável",
+      "test": "Teste",
+      "result": "Resultado",
+      "tester": "Testador",
+      "notes": "Observações",
+      "certification": "Certificação",
+      "issuer": "Emissor",
+      "issueDate": "Data de Emissão",
+      "expiryDate": "Data de Expiração",
+      "cost": "Custo",
+      "totalValue": "Valor Total",
+      "lastPurchase": "Última Compra",
+      "supplier": "Fornecedor"
+    },
+    "actions": {
+      "generate": "Gerar Relatório",
+      "exportPDF": "Exportar PDF",
+      "exportExcel": "Exportar Excel",
+      "print": "Imprimir"
+    },
+    "success": {
+      "generated": "Relatório gerado com sucesso"
+    },
+    "errors": {
+      "generationFailed": "Erro ao gerar relatório"
+    },
+    "info": {
+      "exportingPDF": "Exportando para PDF...",
+      "exportingExcel": "Exportando para Excel...",
+      "printing": "Imprimindo..."
+    }
+  }
+} 

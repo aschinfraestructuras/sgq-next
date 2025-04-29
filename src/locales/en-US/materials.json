@@ -1,0 +1,223 @@
+{
+  "title": "Materials",
+  "description": "Materials and inventory management",
+  "tabs": {
+    "dashboard": "Dashboard",
+    "list": "List",
+    "new": "New Material",
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive",
+    "allTitle": "All Materials",
+    "activeTitle": "Active Materials",
+    "inactiveTitle": "Inactive Materials"
+  },
+  "form": {
+    "name": "Name",
+    "description": "Description",
+    "type": "Type",
+    "category": "Category",
+    "cost": "Cost",
+    "unit": "Unit",
+    "currentStock": "Current Stock",
+    "minStock": "Minimum Stock",
+    "maxStock": "Maximum Stock",
+    "reorderPoint": "Reorder Point",
+    "leadTime": "Lead Time",
+    "location": "Location",
+    "status": "Status",
+    "specifications": "Specifications",
+    "success": "Material saved successfully",
+    "error": "Error saving material"
+  },
+  "types": {
+    "raw": "Raw Material",
+    "component": "Component",
+    "finished": "Finished Product"
+  },
+  "status": {
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive",
+    "discontinued": "Discontinued"
+  },
+  "movements": {
+    "entrada": "Entry",
+    "saida": "Exit",
+    "ajuste": "Adjustment",
+    "teste": "Test"
+  },
+  "tests": {
+    "title": "Tests",
+    "description": "Material testing management",
+    "tabs": {
+      "list": "Test List",
+      "results": "Results",
+      "analytics": "Analytics",
+      "listDescription": "View and manage all material tests",
+      "resultsDescription": "Track test results",
+      "analyticsDescription": "Analytics and statistics of material tests"
+    },
+    "status": {
+      "pending": "Pending",
+      "passed": "Passed",
+      "failed": "Failed"
+    }
+  },
+  "confirmDelete": "Are you sure you want to delete this material?",
+  "deleteSuccess": "Material deleted successfully",
+  "deleteError": "Error deleting material",
+  "search": "Search materials...",
+  "filter": "Filter",
+  "noResults": "No materials found",
+  "stock": "Stock",
+  "actions": "Actions",
+  "category": "Category",
+  "supplier": "Supplier",
+  "certifications": {
+    "title": "Certifications",
+    "description": "Material certification management"
+  },
+  "traceability": {
+    "title": "Traceability",
+    "description": "Complete material chain tracking"
+  },
+  "categories": {
+    "title": "Categories",
+    "description": "Material organization and classification"
+  },
+  "inventory": {
+    "title": "Inventory",
+    "description": "Stock control and movements",
+    "tabs": {
+      "stock": "Stock",
+      "movements": "Movements",
+      "batches": "Batches",
+      "stockDescription": "View current stock of all materials",
+      "movementsDescription": "Track all entry and exit movements",
+      "batchesDescription": "Manage batches and expiration dates"
+    }
+  },
+  "history": "History",
+  "details": "Details",
+  "edit": "Edit",
+  "delete": "Delete",
+  "view": "View",
+  "add": "Add",
+  "save": "Save",
+  "cancel": "Cancel",
+  "reset": "Reset",
+  "loading": "Loading...",
+  "error": "Error loading data",
+  "dashboard": {
+    "description": "Overview of the materials system",
+    "totalMaterials": "Total Materials",
+    "lowStock": "Low Stock",
+    "pendingTests": "Pending Tests",
+    "expiringCertifications": "Expiring Certifications",
+    "totalValue": "Total Value",
+    "stockTurnover": "Stock Turnover",
+    "averageLeadTime": "Average Lead Time",
+    "inStock": "In Stock",
+    "turnoverRate": "Turnover Rate",
+    "byCategory": "By Category",
+    "byStatus": "By Status",
+    "recentMovements": "Recent Movements",
+    "topSuppliers": "Top Suppliers",
+    "inventoryHealth": "Inventory Health",
+    "qualityMetrics": "Quality Metrics"
+  },
+  "reports": {
+    "title": "Material Reports",
+    "description": "Generation and visualization of detailed reports",
+    "selectAndGenerate": "Select filters and generate a report",
+    "generatedOn": "Generated on",
+    "period": "Period",
+    "filters": {
+      "reportType": "Report Type",
+      "materialType": "Material Type",
+      "category": "Category",
+      "status": "Status",
+      "startDate": "Start Date",
+      "endDate": "End Date"
+    },
+    "types": {
+      "stock": "Stock",
+      "stockDescription": "Detailed report of current stock",
+      "movements": "Movements",
+      "movementsDescription": "History of entry and exit movements",
+      "tests": "Tests",
+      "testsDescription": "Test results and statistics",
+      "certifications": "Certifications",
+      "certificationsDescription": "Certification status and validity",
+      "cost": "Costs",
+      "costDescription": "Cost and value analysis of materials"
+    },
+    "summary": {
+      "totalMaterials": "Total Materials",
+      "totalValue": "Total Value",
+      "lowStock": "Low Stock",
+      "outOfStock": "Out of Stock",
+      "totalMovements": "Total Movements",
+      "entries": "Entries",
+      "exits": "Exits",
+      "adjustments": "Adjustments",
+      "totalTests": "Total Tests",
+      "passed": "Passed",
+      "failed": "Failed",
+      "pending": "Pending",
+      "totalCertifications": "Total Certifications",
+      "valid": "Valid",
+      "expired": "Expired",
+      "expiringSoon": "Expiring in 30 days",
+      "averageCost": "Average Cost",
+      "highestValue": "Highest Value",
+      "lowestValue": "Lowest Value"
+    },
+    "table": {
+      "name": "Name",
+      "type": "Type",
+      "category": "Category",
+      "stock": "Stock",
+      "minStock": "Min Stock",
+      "maxStock": "Max Stock",
+      "status": "Status",
+      "location": "Location",
+      "date": "Date",
+      "material": "Material",
+      "quantity": "Quantity",
+      "document": "Document",
+      "reason": "Reason",
+      "responsible": "Responsible",
+      "test": "Test",
+      "result": "Result",
+      "tester": "Tester",
+      "notes": "Notes",
+      "certification": "Certification",
+      "issuer": "Issuer",
+      "issueDate": "Issue Date",
+      "expiryDate": "Expiry Date",
+      "cost": "Cost",
+      "totalValue": "Total Value",
+      "lastPurchase": "Last Purchase",
+      "supplier": "Supplier"
+    },
+    "actions": {
+      "generate": "Generate Report",
+      "exportPDF": "Export PDF",
+      "exportExcel": "Export Excel",
+      "print": "Print"
+    },
+    "success": {
+      "generated": "Report generated successfully"
+    },
+    "errors": {
+      "generationFailed": "Error generating report"
+    },
+    "info": {
+      "exportingPDF": "Exporting to PDF...",
+      "exportingExcel": "Exporting to Excel...",
+      "printing": "Printing..."
+    }
+  }
+} 

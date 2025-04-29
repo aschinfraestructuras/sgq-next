@@ -1,6 +1,6 @@
-export type MaterialStatus = 'active' | 'inactive' | 'pending' | 'discontinued' | 'blocked';
-export type MaterialCategoryType = 'raw' | 'processed' | 'packaging' | 'finished' | 'service' | 'equipment' | 'other';
-export type MaterialUnit = 'kg' | 'unit' | 'm' | 'm2' | 'm3' | 'l' | 'ml' | 'g';
+export type MaterialStatus = 'active' | 'inactive' | 'discontinued';
+export type MaterialCategoryType = 'raw' | 'component' | 'finished';
+export type MaterialUnit = 'unit' | 'kg' | 'g' | 'l' | 'ml' | 'm' | 'm2' | 'm3';
 export type CertificationType = 'quality' | 'safety' | 'environmental' | 'technical' | 'other';
 export type TestStatus = 'pending' | 'passed' | 'failed';
 export type BatchStatus = 'in_stock' | 'in_use' | 'consumed' | 'expired' | 'quarantine';
@@ -78,72 +78,58 @@ export interface MaterialInventoryMovement {
 
 export interface MaterialCategory {
   id: string;
-  code: string;
   name: string;
-  description?: string;
   type: MaterialCategoryType;
   parentId?: string;
-  path: string[];
-  level: number;
-  attributes: {
-    requiresTest?: boolean;
-    requiresCertification?: boolean;
-    isHazardous?: boolean;
-    storageConditions?: string[];
-    customFields?: Record<string, {
-      type: 'text' | 'number' | 'boolean' | 'date' | 'select';
-      required: boolean;
-      options?: string[];
-      unit?: string;
-      validation?: {
-        min?: number;
-        max?: number;
-        pattern?: string;
-      };
-    }>;
-  };
-  metadata?: Record<string, any>;
+  description?: string;
+}
+
+export interface MaterialHistory {
+  id: string;
+  type: 'created' | 'updated' | 'deleted' | 'stock_changed';
+  description: string;
+  changes?: Record<string, unknown>;
+  userId: string;
+  userName: string;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface Material {
   id: string;
-  code: string;
   name: string;
   description?: string;
-  category: MaterialCategory;
-  categoryPath: MaterialCategory[];
-  status: MaterialStatus;
+  type: MaterialCategoryType;
+  categoryId: string;
+  category?: MaterialCategory;
+  cost: number;
+  unit: string;
   currentStock: number;
   minStock: number;
   maxStock: number;
   reorderPoint: number;
-  cost: number;
   leadTime: number;
-  unit: MaterialUnit;
   suppliers: MaterialSupplier[];
-  tests: MaterialTest[];
-  history: MaterialMovement[];
+  location: string;
+  status: MaterialStatus;
+  specifications?: Record<string, string>;
+  certifications?: MaterialCertification[];
+  tests?: MaterialTest[];
+  historico?: MaterialMovement[];
   createdAt: string;
   updatedAt: string;
 }
 
 export interface MaterialFilter {
   search?: string;
-  category?: MaterialCategoryType;
+  category?: string;
   status?: MaterialStatus;
   supplier?: string;
-  certification?: CertificationType;
   hasLowStock?: boolean;
   location?: string;
-  expiringCertification?: boolean;
-  pendingTests?: boolean;
 }
 
 export interface MaterialWithCategory extends Material {
   category: MaterialCategory;
-  categoryPath: MaterialCategory[];
 }
 
 export interface MaterialStats {
@@ -158,32 +144,48 @@ export interface MaterialStats {
   averageLeadTime: number;
   inStock: number;
   turnoverRate: number;
-  categoryBreakdown: Array<{
-    category: MaterialCategoryType;
-    count: number;
-    value: number;
-    stockHealth: {
-      optimal: number;
-      low: number;
-      excess: number;
-    }
-  }>;
-  recentMovements: MaterialMovement[];
+  porCategoria: Record<string, number>;
+  porStatus: Record<string, number>;
+  quantidadeTotal: number;
+  ultimasMovimentacoes: {
+    data: string;
+    tipo: string;
+    quantidade: number;
+  }[];
+  topSuppliers: {
+    name: string;
+    total: number;
+  }[];
+  inventoryHealth: {
+    optimal: number;
+    low: number;
+    excess: number;
+    expired: number;
+  };
   qualityMetrics: {
     testsPassed: number;
     testsFailed: number;
     pendingTests: number;
     rejectionRate: number;
   };
+  categoryBreakdown: {
+    category: string;
+    count: number;
+    value: number;
+    stockHealth: {
+      optimal: number;
+      low: number;
+      excess: number;
+    };
+  }[];
 }
 
 export interface MaterialMovement {
-  id: string;
-  date: string;
-  type: 'entrada' | 'saida' | 'ajuste' | 'teste';
-  quantity: number;
-  responsible: string;
-  observation?: string;
+  tipo: 'entrada' | 'saida' | 'ajuste' | 'teste';
+  quantidade: number;
+  data: string;
+  responsavel: string;
+  observacao?: string;
 }
 
 export interface MaterialSupplier {
@@ -193,4 +195,7 @@ export interface MaterialSupplier {
   rating: number;
   lastDelivery?: string;
   averageLeadTime: number;
+  contact?: string;
+  email?: string;
+  phone?: string;
 } 

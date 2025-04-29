@@ -13,6 +13,9 @@ import {
 } from '@heroicons/react/24/outline';
 import { Autocomplete, TextField, Tooltip } from '@mui/material';
 import { toast } from 'react-hot-toast';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMaterials } from '@/hooks/useMaterials';
 
 interface MaterialFormProps {
   material?: Partial<Material>;
@@ -55,30 +58,51 @@ const FormField: React.FC<FormFieldProps> = ({
   </div>
 );
 
+const materialSchema = z.object({
+  name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
+  description: z.string().optional(),
+  type: z.string(),
+  categoryId: z.string(),
+  cost: z.number().min(0, 'Custo deve ser maior que zero'),
+  unit: z.string(),
+  currentStock: z.number().min(0, 'Estoque atual não pode ser negativo'),
+  minStock: z.number().min(0, 'Estoque mínimo não pode ser negativo'),
+  maxStock: z.number().min(0, 'Estoque máximo não pode ser negativo'),
+  reorderPoint: z.number().min(0, 'Ponto de pedido não pode ser negativo'),
+  leadTime: z.number().min(0, 'Tempo de entrega não pode ser negativo'),
+  suppliers: z.array(z.object({
+    name: z.string(),
+    contact: z.string().optional(),
+    email: z.string().email().optional(),
+    phone: z.string().optional()
+  })),
+  location: z.string(),
+  status: z.enum(['active', 'inactive', 'discontinued']),
+  specifications: z.record(z.string()).optional(),
+  certifications: z.array(z.object({
+    name: z.string(),
+    number: z.string(),
+    issueDate: z.string(),
+    expiryDate: z.string().optional()
+  })).optional(),
+  tests: z.array(z.object({
+    name: z.string(),
+    status: z.enum(['pending', 'passed', 'failed']),
+    date: z.string(),
+    result: z.string().optional()
+  })).optional()
+});
+
+type MaterialFormData = z.infer<typeof materialSchema>;
+
 export function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps) {
   const { t } = useTranslation();
   const [categories, setCategories] = useState<MaterialCategory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  
-  const defaultValues: Partial<Material> = {
-    status: 'pending',
-    unit: 'unit',
-    currentStock: 0,
-    minStock: 0,
-    maxStock: 0,
-    reorderPoint: 0,
-    leadTime: 0,
-    suppliers: [],
-    tests: [],
-    history: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  
-  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<Partial<Material>>({
-    defaultValues: material || defaultValues,
-    mode: 'onChange'
+  const { addMaterial } = useMaterials();
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting }, reset } = useForm<MaterialFormData>({
+    defaultValues: material || {},
+    resolver: zodResolver(materialSchema)
   });
 
   useEffect(() => {
@@ -98,20 +122,23 @@ export function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps
     }
   };
 
-  const handleFormSubmit = async (data: Partial<Material>) => {
+  const handleFormSubmit = async (data: MaterialFormData) => {
     try {
-      setSubmitError(null);
-      await onSubmit(data);
-      toast.success(t('materials.messages.saveSuccess'));
+      await addMaterial({
+        ...data,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        historico: []
+      });
+      toast.success(t('materials.form.success'));
+      reset();
     } catch (error) {
       console.error('Error submitting form:', error instanceof Error ? error.message : 'Unknown error');
-      setSubmitError(t('materials.messages.errorSaving'));
-      toast.error(t('materials.messages.errorSaving'));
+      toast.error(t('materials.form.error'));
     }
   };
 
-  const selectedCategory = watch('category');
-  const currentStock = watch('currentStock') || 0;
+  const selectedCategory = watch('categoryId');
   const minStock = watch('minStock') || 0;
   const maxStock = watch('maxStock') || 0;
 
@@ -136,12 +163,6 @@ export function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-      {submitError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-red-600">{submitError}</p>
-        </div>
-      )}
-
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Código */}
@@ -211,7 +232,7 @@ export function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps
           {/* Categoria */}
           <FormField 
             label={t('materials.form.category')} 
-            error={errors.category?.message}
+            error={errors.categoryId?.message}
             icon={CubeIcon}
             required
           >
@@ -220,13 +241,13 @@ export function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps
               getOptionLabel={(option) => option.name}
               value={selectedCategory || null}
               onChange={(_, newValue) => {
-                setValue('category', newValue || undefined);
+                setValue('categoryId', newValue || undefined);
               }}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   placeholder="Selecione uma categoria"
-                  error={!!errors.category}
+                  error={!!errors.categoryId}
                   required
                 />
               )}

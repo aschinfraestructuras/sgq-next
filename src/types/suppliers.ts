@@ -4,10 +4,20 @@ export type SupplierRating = 1 | 2 | 3 | 4 | 5;
 
 export interface SupplierContact {
   name: string;
-  role: string;
   email: string;
   phone: string;
-  isMain: boolean;
+  role: string;
+}
+
+export interface SupplierAddress {
+  street: string;
+  number: string;
+  complement?: string;
+  district: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
 }
 
 export interface SupplierEvaluation {
@@ -28,31 +38,18 @@ export interface SupplierEvaluation {
 
 export interface Supplier {
   id: string;
-  code: string;
   name: string;
-  tradingName: string;
-  taxId: string;
-  category: SupplierCategory;
+  tradingName?: string;
+  documentNumber: string;
+  email: string;
+  phone: string;
   status: SupplierStatus;
-  address: {
-    street: string;
-    number: string;
-    complement?: string;
-    city: string;
-    state: string;
-    country: string;
-    postalCode: string;
-  };
+  address: SupplierAddress;
   contacts: SupplierContact[];
-  materials: string[]; // IDs dos materiais
-  evaluations: SupplierEvaluation[];
-  documents: string[]; // IDs dos documentos
-  certifications: string[]; // IDs das certificações
+  categories: string[];
+  rating?: number;
   createdAt: string;
   updatedAt: string;
-  createdBy: string;
-  updatedBy: string;
-  metadata: Record<string, any>;
 }
 
 export interface SupplierFilter {

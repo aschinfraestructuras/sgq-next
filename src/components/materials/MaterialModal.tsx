@@ -1,90 +1,141 @@
 import React from 'react';
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
-import MaterialForm from './MaterialForm';
-import type { Material } from '@/types/material';
-import { useLanguage } from '@/context/LanguageContext';
 import { useTranslation } from '@/hooks/useTranslation';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { Material } from '@/types/materials';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface MaterialModalProps {
-  isOpen: boolean;
+  material: Material;
   onClose: () => void;
-  onSubmit: (data: Partial<Material>) => Promise<void>;
-  material?: Partial<Material>;
 }
 
-export default function MaterialModal({ isOpen, onClose, onSubmit, material }: MaterialModalProps) {
-  const { language } = useLanguage();
+export function MaterialModal({ material, onClose }: MaterialModalProps) {
   const { t } = useTranslation();
 
   return (
-    <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm" />
-        </Transition.Child>
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>{material.name}</DialogTitle>
+        </DialogHeader>
 
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95 translate-y-4"
-              enterTo="opacity-100 scale-100 translate-y-0"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100 translate-y-0"
-              leaveTo="opacity-0 scale-95 translate-y-4"
-            >
-              <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-0 text-left align-middle shadow-xl transition-all">
-                {/* Header */}
-                <div className="relative border-b border-gray-200 px-6 py-4">
-                  <Dialog.Title as="div" className="pr-8">
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      {material ? t('materials.modal.edit') : t('materials.modal.create')}
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {material 
-                        ? t('materials.modal.editDescription') 
-                        : t('materials.modal.createDescription')
-                      }
+        <Tabs defaultValue="info" className="w-full">
+          <TabsList>
+            <TabsTrigger value="info">{t('materials.tabs.info')}</TabsTrigger>
+            <TabsTrigger value="stock">{t('materials.tabs.stock')}</TabsTrigger>
+            <TabsTrigger value="history">{t('materials.tabs.history')}</TabsTrigger>
+            <TabsTrigger value="tests">{t('materials.tabs.tests')}</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="info" className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t('materials.category')}</h3>
+                <p className="mt-1">{material.category?.name}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t('materials.type')}</h3>
+                <p className="mt-1">{t(`materials.types.${material.type}`)}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t('materials.status')}</h3>
+                <Badge variant={
+                  material.status === 'active' ? 'default' :
+                  material.status === 'inactive' ? 'secondary' :
+                  'destructive'
+                }>
+                  {t(`materials.status.${material.status}`)}
+                </Badge>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t('materials.location')}</h3>
+                <p className="mt-1">{material.location}</p>
+              </div>
+            </div>
+
+            {material.specifications && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t('materials.specifications')}</h3>
+                <div className="mt-2 grid grid-cols-2 gap-4">
+                  {Object.entries(material.specifications).map(([key, value]) => (
+                    <div key={key}>
+                      <span className="text-sm font-medium text-gray-500">{key}:</span>
+                      <span className="ml-2">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="stock" className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t('materials.currentStock')}</h3>
+                <p className="mt-1 text-2xl font-semibold">
+                  {material.currentStock} {material.unit}
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t('materials.reorderPoint')}</h3>
+                <p className="mt-1">{material.reorderPoint} {material.unit}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t('materials.minStock')}</h3>
+                <p className="mt-1">{material.minStock} {material.unit}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">{t('materials.maxStock')}</h3>
+                <p className="mt-1">{material.maxStock} {material.unit}</p>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="history" className="space-y-4">
+            <div className="space-y-4">
+              {material.historico?.map((movimento, index) => (
+                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{t(`materials.movements.${movimento.tipo}`)}</p>
+                    <p className="text-sm text-gray-500">
+                      {format(new Date(movimento.data), "dd 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
                     </p>
-                  </Dialog.Title>
-                  
-                  <button
-                    type="button"
-                    className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors duration-150"
-                    onClick={onClose}
-                  >
-                    <span className="sr-only">{t('common.close')}</span>
-                    <XMarkIcon className="h-5 w-5" />
-                  </button>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">{movimento.quantidade} {material.unit}</p>
+                    <p className="text-sm text-gray-500">{movimento.responsavel}</p>
+                  </div>
                 </div>
+              ))}
+            </div>
+          </TabsContent>
 
-                {/* Content */}
-                <div className="px-6 py-4">
-                  <MaterialForm
-                    material={material}
-                    onSubmit={async (data) => {
-                      await onSubmit(data);
-                      onClose();
-                    }}
-                    onCancel={onClose}
-                  />
+          <TabsContent value="tests" className="space-y-4">
+            <div className="space-y-4">
+              {material.tests?.map((test, index) => (
+                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{test.name}</p>
+                    <p className="text-sm text-gray-500">
+                      {format(new Date(test.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    </p>
+                  </div>
+                  <Badge variant={
+                    test.status === 'passed' ? 'default' :
+                    test.status === 'failed' ? 'destructive' :
+                    'secondary'
+                  }>
+                    {t(`materials.tests.status.${test.status}`)}
+                  </Badge>
                 </div>
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </div>
-      </Dialog>
-    </Transition>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
   );
 } 

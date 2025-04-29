@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
 
 interface AuthContextType {
   user: User | null;
@@ -33,16 +33,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     loading,
     login: async (email: string, password: string) => {
-      // Implementation
+      await signInWithEmailAndPassword(auth, email, password);
     },
     register: async (email: string, password: string) => {
-      // Implementation
+      await createUserWithEmailAndPassword(auth, email, password);
     },
     logout: async () => {
-      // Implementation
+      await signOut(auth);
     },
     resetPassword: async (email: string) => {
-      // Implementation
+      await sendPasswordResetEmail(auth, email);
     }
   };
 
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

@@ -1,6 +1,5 @@
 import { auth } from '@/lib/firebase/config';
 import {
-  onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -26,9 +25,10 @@ export function getCurrentUser(): FirebaseUser | null {
   return auth.currentUser;
 }
 
-export async function login(email: string, password: string): Promise<void> {
+export async function login(email: string, password: string): Promise<User> {
   try {
-    await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return mapFirebaseUserToUser(userCredential.user);
   } catch (error) {
     if (error instanceof FirebaseError) {
       throw new Error(error.message);
@@ -37,9 +37,11 @@ export async function login(email: string, password: string): Promise<void> {
   }
 }
 
-export async function register(email: string, password: string): Promise<void> {
+export async function register(email: string, password: string, name: string): Promise<User> {
   try {
-    await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(userCredential.user, { displayName: name });
+    return mapFirebaseUserToUser(userCredential.user);
   } catch (error) {
     if (error instanceof FirebaseError) {
       throw new Error(error.message);
@@ -59,9 +61,19 @@ export async function logout(): Promise<void> {
   }
 }
 
-export async function updateUserProfile(user: FirebaseUser, data: { displayName?: string; photoURL?: string }): Promise<void> {
+export async function updateUserProfile(data: Partial<User>): Promise<User> {
   try {
-    await updateProfile(user, data);
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('No user logged in');
+    }
+
+    await updateProfile(currentUser, {
+      displayName: data.name,
+      photoURL: data.avatar
+    });
+
+    return mapFirebaseUserToUser(currentUser);
   } catch (error) {
     if (error instanceof FirebaseError) {
       throw new Error(error.message);

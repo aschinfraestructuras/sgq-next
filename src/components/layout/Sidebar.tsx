@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   HomeIcon,
@@ -19,11 +20,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAppState } from '@/hooks/useAppState';
 import { useAuth } from '@/hooks/useAuth';
-
-interface SidebarProps {
-  isOpen: boolean;
-  onToggle: () => void;
-}
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -52,7 +48,7 @@ const navigation = [
   { name: 'Configurações', href: '/configuracoes', icon: Cog6ToothIcon },
 ];
 
-const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
+const Sidebar = () => {
   const pathname = usePathname();
   const { sidebarOpen } = useAppState();
   const { user } = useAuth();
@@ -117,11 +113,15 @@ const Sidebar = ({ isOpen, onToggle }: SidebarProps) => {
           <div className="flex items-center w-full">
             <div className="flex-shrink-0">
               {user?.avatar ? (
-                <img
-                  className="h-8 w-8 rounded-full"
-                  src={user.avatar}
-                  alt={user.name || 'Usuário'}
-                />
+                <div className="relative h-8 w-8">
+                  <Image
+                    className="rounded-full"
+                    src={user.avatar}
+                    alt={user.name || 'Usuário'}
+                    fill
+                    sizes="32px"
+                  />
+                </div>
               ) : (
                 <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center">
                   <span className="text-white text-sm font-medium">
