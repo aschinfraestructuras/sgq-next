@@ -2,15 +2,15 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTranslation } from '@/hooks/useTranslation';
-import type { Material, MaterialCategory, MaterialStatus } from '@/types/material';
+import type { Material, MaterialCategory, MaterialStatus, MaterialUnit } from '@/types/material';
 import {
   TagIcon,
   DocumentTextIcon,
   CubeIcon,
   CheckCircleIcon,
   ScaleIcon,
-  ArrowsPointingInIcon,
-  ArrowsPointingOutIcon
+  MapPinIcon,
+  BuildingOfficeIcon
 } from '@heroicons/react/24/outline';
 
 interface MaterialFormProps {
@@ -20,19 +20,21 @@ interface MaterialFormProps {
 }
 
 const categories: MaterialCategory[] = ['materia-prima', 'insumo', 'equipamento', 'ferramenta', 'outro'];
-const statuses: MaterialStatus[] = ['ativo', 'inativo', 'em_analise', 'aguardando_teste', 'reprovado'];
-const units = ['kg', 'unit', 'm', 'm2', 'm3', 'l', 'ml', 'g'];
+const statuses: MaterialStatus[] = ['ativo', 'inativo', 'em_analise'];
+const units: MaterialUnit[] = ['unit', 'kg', 'g', 'l', 'ml', 'box'];
 
-const FormField = ({ 
+interface FormFieldProps {
+  label: string;
+  error?: string;
+  icon?: React.ElementType;
+  children: React.ReactNode;
+}
+
+const FormField: React.FC<FormFieldProps> = ({ 
   label, 
   error, 
   icon: Icon,
   children 
-}: { 
-  label: string; 
-  error?: string;
-  icon?: React.ElementType;
-  children: React.ReactNode;
 }) => (
   <div className="animate-slide-in">
     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -57,38 +59,32 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Partial<Material>>({
     defaultValues: material || {
       status: 'em_analise',
-      category: 'materia-prima',
-      unit: 'unit',
-      minStock: 0,
-      currentStock: 0,
-      pendingTests: 0,
-      consumptionRate: 0,
-      suppliers: [],
-      movements: []
+      categoria: 'materia-prima',
+      unidade: 'unit',
+      quantidade: 0,
+      localizacao: '',
+      fornecedor: '',
+      ultimaAtualizacao: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
   });
 
-  const currentStock = watch('currentStock');
-  const minStock = watch('minStock');
-  const stockStatus = currentStock && minStock ? (
-    currentStock <= minStock ? 'text-red-600' :
-    currentStock <= minStock * 1.2 ? 'text-yellow-600' :
-    'text-green-600'
-  ) : '';
+  const quantidade = watch('quantidade') || 0;
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* ID */}
+          {/* Código */}
           <FormField 
-            label={t('materials.form.id')} 
-            error={errors.id?.message}
+            label={t('materials.form.code')} 
+            error={errors.codigo?.message}
             icon={TagIcon}
           >
             <input
               type="text"
-              {...register('id')}
+              {...register('codigo', { required: 'Código é obrigatório' })}
               className="input"
               placeholder="Ex: MAT-001"
               disabled={!!material}
@@ -98,12 +94,12 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
           {/* Nome */}
           <FormField 
             label={t('materials.form.name')} 
-            error={errors.name?.message}
+            error={errors.nome?.message}
             icon={DocumentTextIcon}
           >
             <input
               type="text"
-              {...register('name', { required: 'Nome é obrigatório' })}
+              {...register('nome', { required: 'Nome é obrigatório' })}
               className="input"
               placeholder="Ex: Aço Inoxidável 304"
             />
@@ -113,11 +109,11 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
           <div className="md:col-span-2">
             <FormField 
               label={t('materials.form.description')} 
-              error={errors.description?.message}
+              error={errors.descricao?.message}
               icon={DocumentTextIcon}
             >
               <textarea
-                {...register('description')}
+                {...register('descricao')}
                 rows={3}
                 className="input resize-none"
                 placeholder="Descreva o material..."
@@ -128,11 +124,11 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
           {/* Categoria */}
           <FormField 
             label={t('materials.form.category')} 
-            error={errors.category?.message}
+            error={errors.categoria?.message}
             icon={CubeIcon}
           >
             <select
-              {...register('category')}
+              {...register('categoria', { required: 'Categoria é obrigatória' })}
               className="input"
             >
               {categories.map((category) => (
@@ -150,7 +146,7 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
             icon={CheckCircleIcon}
           >
             <select
-              {...register('status')}
+              {...register('status', { required: 'Status é obrigatório' })}
               className="input"
             >
               {statuses.map((status) => (
@@ -164,11 +160,11 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
           {/* Unidade */}
           <FormField 
             label={t('materials.form.unit')} 
-            error={errors.unit?.message}
+            error={errors.unidade?.message}
             icon={ScaleIcon}
           >
             <select
-              {...register('unit')}
+              {...register('unidade', { required: 'Unidade é obrigatória' })}
               className="input"
             >
               {units.map((unit) => (
@@ -179,55 +175,48 @@ export default function MaterialForm({ material, onSubmit, onCancel }: MaterialF
             </select>
           </FormField>
 
-          {/* Estoque Mínimo */}
+          {/* Quantidade */}
           <FormField 
-            label={t('materials.form.minStock')} 
-            error={errors.minStock?.message}
-            icon={ArrowsPointingInIcon}
-          >
-            <input
-              type="number"
-              {...register('minStock', { 
-                required: 'Estoque mínimo é obrigatório',
-                min: { value: 0, message: 'Deve ser maior ou igual a 0' }
-              })}
-              className="input"
-              placeholder="0"
-            />
-          </FormField>
-
-          {/* Estoque Atual */}
-          <FormField 
-            label={t('materials.form.currentStock')} 
-            error={errors.currentStock?.message}
-            icon={ArrowsPointingOutIcon}
-          >
-            <input
-              type="number"
-              {...register('currentStock', { 
-                required: 'Estoque atual é obrigatório',
-                min: { value: 0, message: 'Deve ser maior ou igual a 0' }
-              })}
-              className={`input ${stockStatus}`}
-              placeholder="0"
-            />
-          </FormField>
-
-          {/* Preço Unitário */}
-          <FormField 
-            label={t('materials.form.unitPrice')} 
-            error={errors.unitPrice?.message}
+            label={t('materials.form.quantity')} 
+            error={errors.quantidade?.message}
             icon={ScaleIcon}
           >
             <input
               type="number"
-              step="0.01"
-              {...register('unitPrice', { 
-                required: 'Preço unitário é obrigatório',
+              {...register('quantidade', { 
+                required: 'Quantidade é obrigatória',
                 min: { value: 0, message: 'Deve ser maior ou igual a 0' }
               })}
               className="input"
-              placeholder="0.00"
+              placeholder="0"
+            />
+          </FormField>
+
+          {/* Localização */}
+          <FormField 
+            label={t('materials.form.location')} 
+            error={errors.localizacao?.message}
+            icon={MapPinIcon}
+          >
+            <input
+              type="text"
+              {...register('localizacao', { required: 'Localização é obrigatória' })}
+              className="input"
+              placeholder="Ex: Almoxarifado A"
+            />
+          </FormField>
+
+          {/* Fornecedor */}
+          <FormField 
+            label={t('materials.form.supplier')} 
+            error={errors.fornecedor?.message}
+            icon={BuildingOfficeIcon}
+          >
+            <input
+              type="text"
+              {...register('fornecedor', { required: 'Fornecedor é obrigatório' })}
+              className="input"
+              placeholder="Ex: Fornecedor A"
             />
           </FormField>
         </div>
