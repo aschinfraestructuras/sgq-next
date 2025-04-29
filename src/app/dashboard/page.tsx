@@ -121,7 +121,7 @@ const modules: ModuleData[] = [
 
 export default function DashboardPage() {
   const { language } = useLanguage();
-  const { t } = useTranslation(language);
+  const { t } = useTranslation();
 
   return (
     <AppLayout>
