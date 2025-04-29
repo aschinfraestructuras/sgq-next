@@ -24,7 +24,7 @@ interface AuthState {
   setError: (error: string | null) => void;
 }
 
-const useAuth = create<AuthState>((set) => ({
+export const useAuth = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   loading: true,
@@ -93,5 +93,3 @@ if (typeof window !== 'undefined') {
     });
   });
 }
-
-export default useAuth;
