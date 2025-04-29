@@ -12,6 +12,8 @@ import {
   limit,
   Timestamp,
   DocumentData,
+  CollectionReference,
+  Query,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { Material, MaterialFilter, MaterialStats } from '@/types/material';
@@ -20,24 +22,27 @@ const COLLECTION = 'materials';
 
 export async function getMaterials(filter?: MaterialFilter) {
   try {
-    let q = collection(db, COLLECTION);
+    let materialsQuery: Query<DocumentData> = collection(db, COLLECTION);
 
     if (filter) {
       if (filter.search) {
-        q = query(q, where('nome', '>=', filter.search), where('nome', '<=', filter.search + '\uf8ff'));
+        materialsQuery = query(materialsQuery, 
+          where('nome', '>=', filter.search), 
+          where('nome', '<=', filter.search + '\uf8ff')
+        );
       }
       if (filter.categoria) {
-        q = query(q, where('categoria', '==', filter.categoria));
+        materialsQuery = query(materialsQuery, where('categoria', '==', filter.categoria));
       }
       if (filter.status) {
-        q = query(q, where('status', '==', filter.status));
+        materialsQuery = query(materialsQuery, where('status', '==', filter.status));
       }
       if (filter.fornecedor) {
-        q = query(q, where('fornecedor', '==', filter.fornecedor));
+        materialsQuery = query(materialsQuery, where('fornecedor', '==', filter.fornecedor));
       }
     }
 
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await getDocs(materialsQuery);
     return querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
