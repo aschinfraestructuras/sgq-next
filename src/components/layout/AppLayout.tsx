@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Toaster } from 'react-hot-toast';
 import Header from './Header';
 import Sidebar from './Sidebar';
@@ -15,7 +15,8 @@ interface AppLayoutProps {
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const pathname = usePathname();
   const { sidebarOpen, setSidebarOpen, theme } = useAppState();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
+  const router = useRouter();
 
   // Fechar sidebar em telas menores quando mudar de rota
   useEffect(() => {
@@ -33,15 +34,22 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     }
   }, [theme]);
 
-  if (!isAuthenticated) {
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-gray-900">Acesso Negado</h1>
-          <p className="mt-2 text-gray-600">Faça login para acessar esta página</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"></div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (

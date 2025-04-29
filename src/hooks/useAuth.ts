@@ -1,67 +1,97 @@
 'use client';
 
 import { create } from 'zustand';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'user' | 'manager';
-  department: string;
-  avatar?: string;
-}
+import { 
+  User as FirebaseUser,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  updateProfile,
+  onAuthStateChanged
+} from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 interface AuthState {
-  user: User | null;
+  user: FirebaseUser | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
+  loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
-  updateUser: (user: Partial<User>) => void;
+  updateUserProfile: (displayName: string) => Promise<void>;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
 }
 
-export const useAuth = create<AuthState>((set) => ({
+const useAuth = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
-  isLoading: true,
+  loading: true,
   error: null,
 
   login: async (email: string, password: string) => {
-    set({ isLoading: true, error: null });
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Invalid credentials');
-      }
-
-      const user = await response.json();
-      set({ user, isAuthenticated: true, isLoading: false });
+      set({ loading: true, error: null });
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
+      set({ error: (error as Error).message });
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  register: async (email: string, password: string, name: string) => {
+    try {
+      set({ loading: true, error: null });
+      const { user } = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(user, { displayName: name });
+    } catch (error) {
+      set({ error: (error as Error).message });
+    } finally {
+      set({ loading: false });
     }
   },
 
   logout: async () => {
-    set({ isLoading: true });
     try {
-      // TODO: Replace with actual API call
-      await fetch('/api/auth/logout', { method: 'POST' });
-      set({ user: null, isAuthenticated: false, isLoading: false });
+      set({ loading: true, error: null });
+      await signOut(auth);
     } catch (error) {
-      set({ error: (error as Error).message, isLoading: false });
+      set({ error: (error as Error).message });
+    } finally {
+      set({ loading: false });
     }
   },
 
-  updateUser: (userData) => {
-    set((state) => ({
-      user: state.user ? { ...state.user, ...userData } : null,
-    }));
+  updateUserProfile: async (displayName: string) => {
+    try {
+      set({ loading: true, error: null });
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await updateProfile(currentUser, { displayName });
+        set({ user: auth.currentUser });
+      }
+    } catch (error) {
+      set({ error: (error as Error).message });
+    } finally {
+      set({ loading: false });
+    }
   },
-})); 
+
+  setLoading: (loading: boolean) => set({ loading }),
+  setError: (error: string | null) => set({ error })
+}));
+
+// Initialize auth state listener
+if (typeof window !== 'undefined') {
+  onAuthStateChanged(auth, (user) => {
+    useAuth.setState({ 
+      user,
+      isAuthenticated: !!user,
+      loading: false
+    });
+  });
+}
+
+export default useAuth;
