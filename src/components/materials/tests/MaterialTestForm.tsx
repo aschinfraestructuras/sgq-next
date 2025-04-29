@@ -14,31 +14,41 @@ import {
   IconButton,
 } from '@mui/material';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import type { MaterialTest } from '@/types/materials';
+import type { MaterialTest, TestStatus } from '@/types/materials';
+import { getCurrentUser } from '@/services/auth';
 
 interface MaterialTestFormProps {
+  materialId: string;
   open: boolean;
   onClose: () => void;
-  onSubmit: (testData: Omit<MaterialTest, 'id'>) => Promise<void>;
+  onSubmit: (testData: Omit<MaterialTest, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   initialData?: MaterialTest;
 }
 
 export default function MaterialTestForm({
+  materialId,
   open,
   onClose,
   onSubmit,
   initialData
 }: MaterialTestFormProps) {
-  const [formData, setFormData] = useState<Partial<MaterialTest>>(
-    initialData || {
+  const [formData, setFormData] = useState<Partial<MaterialTest>>(() => {
+    if (initialData) return initialData;
+
+    const now = new Date().toISOString();
+    return {
+      materialId,
       type: '',
-      date: new Date().toISOString().split('T')[0],
-      status: 'pending',
+      date: now.split('T')[0],
+      status: 'pending' as TestStatus,
       results: {},
       technician: '',
-      notes: ''
-    }
-  );
+      notes: '',
+      attachments: [],
+      createdBy: '',
+      updatedBy: ''
+    };
+  });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +66,18 @@ export default function MaterialTestForm({
     setError(null);
 
     try {
-      await onSubmit(formData as Omit<MaterialTest, 'id'>);
+      const user = await getCurrentUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      const testData = {
+        ...formData,
+        createdBy: initialData?.createdBy || user.uid,
+        updatedBy: user.uid,
+      } as Omit<MaterialTest, 'id' | 'createdAt' | 'updatedAt'>;
+
+      await onSubmit(testData);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao salvar teste');
@@ -115,7 +136,7 @@ export default function MaterialTestForm({
                 <Select
                   value={formData.status}
                   label="Status"
-                  onChange={(e) => handleChange('status', e.target.value)}
+                  onChange={(e) => handleChange('status', e.target.value as TestStatus)}
                 >
                   <MenuItem value="pending">Pendente</MenuItem>
                   <MenuItem value="in_progress">Em Progresso</MenuItem>

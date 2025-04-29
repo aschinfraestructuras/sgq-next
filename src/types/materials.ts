@@ -19,6 +19,7 @@ export interface MaterialCertification {
 
 export interface MaterialTest {
   id: string;
+  materialId: string;
   type: string;
   date: string;
   status: TestStatus;
@@ -26,6 +27,10 @@ export interface MaterialTest {
   technician: string;
   notes?: string;
   attachments?: string[];
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy: string;
 }
 
 export interface MaterialBatch {
