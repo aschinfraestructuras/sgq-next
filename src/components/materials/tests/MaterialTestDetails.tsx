@@ -5,12 +5,10 @@ import {
   DialogContent,
   IconButton,
   Typography,
-  Grid,
   Paper,
   Chip,
   Button,
   Box,
-  Card,
 } from '@mui/material';
 import {
   XMarkIcon,
@@ -20,16 +18,39 @@ import {
   CalendarIcon,
   ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
-import type { MaterialTest, TestResults, TestStatus } from '@/types/materials';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Download } from '@mui/icons-material';
+import { Download, Close } from '@mui/icons-material';
+
+interface MaterialTest {
+  id: string;
+  technician: string;
+  date: string | Date;
+  title: string;
+  status: TestStatus;
+  results: TestResult[];
+  notes?: string;
+  attachments?: Attachment[];
+}
+
+interface TestResult {
+  parameter: string;
+  value: number | string;
+  unit: string;
+}
+
+interface Attachment {
+  name: string;
+  url: string;
+}
+
+type TestStatus = 'pending' | 'in_progress' | 'passed' | 'failed';
 
 interface MaterialTestDetailsProps {
   test: MaterialTest;
   open: boolean;
   onClose: () => void;
-  onDownload?: () => void;
+  onDownload?: (attachment: Attachment) => void;
 }
 
 const getStatusColor = (status: TestStatus): 'default' | 'primary' | 'success' | 'error' => {
@@ -47,141 +68,117 @@ const getStatusColor = (status: TestStatus): 'default' | 'primary' | 'success' |
   }
 };
 
-const MaterialTestDetails: FC<MaterialTestDetailsProps> = ({ test, open, onClose, onDownload }) => {
+export default function MaterialTestDetails({ test, open, onClose, onDownload }: MaterialTestDetailsProps) {
   const statusColor = getStatusColor(test.status);
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: { borderRadius: 2 }
-      }}
-    >
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
-        <Typography variant="h6" component="h2">
-          Detalhes do Teste
-        </Typography>
-        <IconButton onClick={onClose} size="small">
-          <XMarkIcon width={20} />
-        </IconButton>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6">Detalhes do Teste</Typography>
+          <IconButton onClick={onClose} size="small">
+            <Close />
+          </IconButton>
+        </Box>
       </DialogTitle>
       <DialogContent>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Card sx={{ p: 2 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+        <Box sx={{ p: 2 }}>
+          <Box display="flex" flexDirection="column" gap={3}>
+            {/* Header Information */}
+            <Paper sx={{ p: 2 }}>
+              <Box display="flex" flexWrap="wrap" gap={2}>
+                <Box flex={1} minWidth={240}>
                   <Box display="flex" alignItems="center" gap={1}>
-                    <BeakerIcon width={20} />
-                    <Typography variant="subtitle1">Status</Typography>
-                  </Box>
-                  <Chip
-                    label={test.status}
-                    color={statusColor}
-                    size="small"
-                    sx={{ mt: 1 }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <UserIcon width={20} />
-                    <Typography variant="subtitle1">Técnico Responsável</Typography>
-                  </Box>
-                  <Typography color="text.secondary" sx={{ mt: 1 }}>
-                    {test.technician}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Box display="flex" alignItems="center" gap={1}>
-                    <CalendarIcon width={20} />
-                    <Typography variant="subtitle1">Data Prevista</Typography>
-                  </Box>
-                  <Typography color="text.secondary" sx={{ mt: 1 }}>
-                    {format(test.dueDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                  </Typography>
-                </Grid>
-                {test.completionDate && (
-                  <Grid item xs={12} sm={6}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <CalendarIcon width={20} />
-                      <Typography variant="subtitle1">Data de Conclusão</Typography>
-                    </Box>
-                    <Typography color="text.secondary" sx={{ mt: 1 }}>
-                      {format(test.completionDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                    </Typography>
-                  </Grid>
-                )}
-              </Grid>
-            </Card>
-          </Grid>
-
-          {test.results && (
-            <Grid item xs={12}>
-              <Card sx={{ p: 2 }}>
-                <Box display="flex" alignItems="center" gap={1} mb={2}>
-                  <ClipboardDocumentListIcon width={20} />
-                  <Typography variant="subtitle1">Resultados</Typography>
-                </Box>
-                <Grid container spacing={2}>
-                  {Object.entries(test.results).map(([parameter, value]) => (
-                    <Grid item xs={12} sm={6} key={parameter}>
-                      <Typography variant="subtitle2">{parameter}</Typography>
-                      <Typography color="text.secondary">
-                        {value.toString()}
+                    <UserIcon width={24} />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Técnico Responsável
                       </Typography>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Card>
-            </Grid>
-          )}
-
-          {test.notes && (
-            <Grid item xs={12}>
-              <Card sx={{ p: 2 }}>
-                <Box display="flex" alignItems="center" gap={1} mb={2}>
-                  <ClipboardDocumentListIcon width={20} />
-                  <Typography variant="subtitle1">Observações</Typography>
+                      <Typography>{test.technician}</Typography>
+                    </Box>
+                  </Box>
                 </Box>
-                <Typography color="text.secondary">
-                  {test.notes}
+                <Box flex={1} minWidth={240}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <CalendarIcon width={24} />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Data do Teste
+                      </Typography>
+                      <Typography>
+                        {format(new Date(test.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+                <Box flex={1} minWidth={240}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <ClipboardDocumentListIcon width={24} />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary">
+                        Título
+                      </Typography>
+                      <Typography>{test.title}</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </Paper>
+
+            {/* Test Results */}
+            <Paper sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Resultados
+              </Typography>
+              <Box display="flex" flexWrap="wrap" gap={2}>
+                {test.results.map((result, index) => (
+                  <Box key={index} flex={1} minWidth={240}>
+                    <Typography variant="caption" color="text.secondary">
+                      {result.parameter}
+                    </Typography>
+                    <Typography>
+                      {result.value} {result.unit}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Paper>
+
+            {/* Notes */}
+            {test.notes && (
+              <Paper sx={{ p: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  Observações
                 </Typography>
-              </Card>
-            </Grid>
-          )}
+                <Typography>{test.notes}</Typography>
+              </Paper>
+            )}
 
-          {test.attachments && test.attachments.length > 0 && (
-            <Grid item xs={12}>
-              <Card sx={{ p: 2 }}>
-                <Box display="flex" alignItems="center" gap={1} mb={2}>
-                  <DocumentArrowDownIcon width={20} />
-                  <Typography variant="subtitle1">Anexos</Typography>
-                </Box>
-                <Grid container spacing={1}>
+            {/* Attachments */}
+            {test.attachments && test.attachments.length > 0 && (
+              <Paper sx={{ p: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  Anexos
+                </Typography>
+                <Box display="flex" flexWrap="wrap" gap={2}>
                   {test.attachments.map((attachment, index) => (
-                    <Grid item xs={12} key={index}>
+                    <Box key={index} flex={1} minWidth={240}>
                       <Button
                         variant="outlined"
                         startIcon={<Download />}
-                        onClick={onDownload}
+                        onClick={() => onDownload?.(attachment)}
                         fullWidth
-                        sx={{ justifyContent: 'flex-start' }}
                       >
                         {attachment.name}
                       </Button>
-                    </Grid>
+                    </Box>
                   ))}
-                </Grid>
-              </Card>
-            </Grid>
-          )}
-        </Grid>
+                </Box>
+              </Paper>
+            )}
+          </Box>
+        </Box>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default MaterialTestDetails; 
+} 
