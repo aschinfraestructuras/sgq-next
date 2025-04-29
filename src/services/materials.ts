@@ -16,37 +16,60 @@ import {
   Query,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { Material, MaterialFilter, MaterialStats } from '@/types/material';
+import type { 
+  Material, 
+  MaterialFilter, 
+  MaterialStats, 
+  MaterialCategory,
+  MaterialCategoryType,
+  MaterialStatus
+} from '@/types/materials';
+import { getCategory, getCategoryHierarchy } from './materialCategories';
 
 const COLLECTION = 'materials';
 
-export async function getMaterials(filter?: MaterialFilter) {
+export async function getMaterials(filter?: MaterialFilter): Promise<Material[]> {
   try {
     let materialsQuery: Query<DocumentData> = collection(db, COLLECTION);
 
     if (filter) {
       if (filter.search) {
         materialsQuery = query(materialsQuery, 
-          where('nome', '>=', filter.search), 
-          where('nome', '<=', filter.search + '\uf8ff')
+          where('name', '>=', filter.search), 
+          where('name', '<=', filter.search + '\uf8ff')
         );
       }
-      if (filter.categoria) {
-        materialsQuery = query(materialsQuery, where('categoria', '==', filter.categoria));
+      if (filter.category) {
+        materialsQuery = query(materialsQuery, where('type', '==', filter.category));
       }
       if (filter.status) {
         materialsQuery = query(materialsQuery, where('status', '==', filter.status));
       }
-      if (filter.fornecedor) {
-        materialsQuery = query(materialsQuery, where('fornecedor', '==', filter.fornecedor));
+      if (filter.supplier) {
+        materialsQuery = query(materialsQuery, where('suppliers', 'array-contains', { name: filter.supplier }));
+      }
+      if (filter.hasLowStock) {
+        materialsQuery = query(materialsQuery, where('currentStock', '<=', 'reorderPoint'));
+      }
+      if (filter.location) {
+        materialsQuery = query(materialsQuery, where('inventory.locations', 'array-contains', { name: filter.location }));
       }
     }
 
     const querySnapshot = await getDocs(materialsQuery);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as Material[];
+    const materials = await Promise.all(querySnapshot.docs.map(async doc => {
+      const data = doc.data();
+      const categoryHierarchy = await getCategoryHierarchy(data.categoryId);
+      
+      return {
+        id: doc.id,
+        ...data,
+        category: categoryHierarchy[categoryHierarchy.length - 1],
+        categoryPath: categoryHierarchy
+      } as Material;
+    }));
+
+    return materials;
   } catch (error) {
     console.error('Error getting materials:', error);
     throw error;
@@ -59,9 +82,14 @@ export async function getMaterial(id: string) {
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
+      const data = docSnap.data();
+      const categoryHierarchy = await getCategoryHierarchy(data.categoryId);
+      
       return {
         id: docSnap.id,
-        ...docSnap.data()
+        ...data,
+        category: categoryHierarchy[categoryHierarchy.length - 1],
+        categoryPath: categoryHierarchy
       } as Material;
     }
     
@@ -74,6 +102,9 @@ export async function getMaterial(id: string) {
 
 export async function createMaterial(data: Omit<Material, 'id'>) {
   try {
+    // Validate category exists
+    await getCategory(data.categoryId);
+    
     const docRef = await addDoc(collection(db, COLLECTION), {
       ...data,
       createdAt: Timestamp.now(),
@@ -89,6 +120,11 @@ export async function createMaterial(data: Omit<Material, 'id'>) {
 
 export async function updateMaterial(id: string, data: Partial<Material>) {
   try {
+    // If category is being updated, validate it exists
+    if (data.categoryId) {
+      await getCategory(data.categoryId);
+    }
+    
     const docRef = doc(db, COLLECTION, id);
     await updateDoc(docRef, {
       ...data,
@@ -116,33 +152,82 @@ export async function getMaterialStats(): Promise<MaterialStats> {
     
     const stats: MaterialStats = {
       total: materials.length,
+      byCategory: {} as Record<MaterialCategoryType, number>,
+      byStatus: {} as Record<MaterialStatus, number>,
+      lowStock: 0,
+      withPendingTests: 0,
+      withExpiringCertifications: 0,
+      totalValue: 0,
+      stockTurnover: 0,
+      averageLeadTime: 0,
+      inStock: 0,
+      turnoverRate: 0,
       porCategoria: {},
-      porStatus: {
-        ativo: 0,
-        inativo: 0,
-        em_analise: 0
-      },
-      valorTotal: 0,
+      porStatus: {},
       quantidadeTotal: 0,
-      mediaConsumoMensal: 0,
-      ultimasMovimentacoes: []
+      ultimasMovimentacoes: [],
+      topSuppliers: [],
+      inventoryHealth: {
+        optimal: 0,
+        low: 0,
+        excess: 0,
+        expired: 0
+      },
+      qualityMetrics: {
+        testsPassed: 0,
+        testsFailed: 0,
+        pendingTests: 0,
+        rejectionRate: 0
+      },
+      categoryBreakdown: []
     };
 
     materials.forEach(material => {
-      // Contagem por categoria
-      if (material.categoria) {
-        stats.porCategoria[material.categoria] = (stats.porCategoria[material.categoria] || 0) + 1;
+      // Category breakdown
+      const categoryStats = stats.categoryBreakdown.find(c => c.category === material.category.type) || {
+        category: material.category.type,
+        count: 0,
+        value: 0,
+        stockHealth: {
+          optimal: 0,
+          low: 0,
+          excess: 0
+        }
+      };
+      
+      categoryStats.count++;
+      categoryStats.value += material.currentStock * material.cost;
+      
+      if (material.currentStock <= material.reorderPoint) {
+        categoryStats.stockHealth.low++;
+        stats.lowStock++;
+      } else if (material.currentStock >= material.maxStock) {
+        categoryStats.stockHealth.excess++;
+      } else {
+        categoryStats.stockHealth.optimal++;
+      }
+      
+      if (!stats.categoryBreakdown.find(c => c.category === material.category.type)) {
+        stats.categoryBreakdown.push(categoryStats);
       }
 
-      // Contagem por status
-      if (material.status) {
-        stats.porStatus[material.status]++;
+      // Status count
+      stats.byStatus[material.status] = (stats.byStatus[material.status] || 0) + 1;
+      stats.porStatus[material.status] = (stats.porStatus[material.status] || 0) + 1;
+
+      // Category count
+      stats.byCategory[material.category.type] = (stats.byCategory[material.category.type] || 0) + 1;
+      stats.porCategoria[material.category.type] = (stats.porCategoria[material.category.type] || 0) + 1;
+
+      // Total value and quantity
+      stats.totalValue += material.currentStock * material.cost;
+      stats.quantidadeTotal += material.currentStock;
+      
+      if (material.currentStock > 0) {
+        stats.inStock++;
       }
 
-      // Quantidade total
-      stats.quantidadeTotal += material.quantidade || 0;
-
-      // Últimas movimentações
+      // Movement history
       if (material.historico && material.historico.length > 0) {
         stats.ultimasMovimentacoes.push(...material.historico
           .slice(0, 5)
@@ -152,14 +237,27 @@ export async function getMaterialStats(): Promise<MaterialStats> {
             quantidade: h.quantidade
           })));
       }
+
+      // Tests metrics
+      const pendingTests = material.tests.filter(t => t.status === 'pending').length;
+      if (pendingTests > 0) {
+        stats.withPendingTests++;
+      }
+      stats.qualityMetrics.pendingTests += pendingTests;
+      stats.qualityMetrics.testsPassed += material.tests.filter(t => t.status === 'passed').length;
+      stats.qualityMetrics.testsFailed += material.tests.filter(t => t.status === 'failed').length;
     });
 
-    // Ordenar movimentações por data
+    // Calculate averages and rates
+    stats.turnoverRate = materials.reduce((acc, m) => acc + (m.currentStock > 0 ? 1 : 0), 0) / materials.length;
+    stats.averageLeadTime = materials.reduce((acc, m) => acc + m.leadTime, 0) / materials.length;
+    stats.qualityMetrics.rejectionRate = stats.qualityMetrics.testsFailed / 
+      (stats.qualityMetrics.testsPassed + stats.qualityMetrics.testsFailed);
+
+    // Sort and limit movements
     stats.ultimasMovimentacoes.sort((a, b) => 
       new Date(b.data).getTime() - new Date(a.data).getTime()
     );
-
-    // Limitar a 5 movimentações
     stats.ultimasMovimentacoes = stats.ultimasMovimentacoes.slice(0, 5);
 
     return stats;
@@ -180,7 +278,7 @@ export async function addMaterialMovement(
 ) {
   try {
     const material = await getMaterial(materialId);
-    const novaQuantidade = material.quantidade + (
+    const novaQuantidade = (material.quantidade || material.currentStock) + (
       movimento.tipo === 'entrada' ? movimento.quantidade : 
       movimento.tipo === 'saida' ? -movimento.quantidade :
       movimento.quantidade
@@ -193,6 +291,7 @@ export async function addMaterialMovement(
     };
 
     await updateMaterial(materialId, {
+      currentStock: novaQuantidade,
       quantidade: novaQuantidade,
       historico: [...(material.historico || []), novoHistorico]
     });

@@ -1,5 +1,5 @@
 export type MaterialStatus = 'active' | 'inactive' | 'pending' | 'discontinued';
-export type MaterialCategory = 'raw' | 'processed' | 'packaging' | 'equipment' | 'other';
+export type MaterialCategoryType = 'raw' | 'processed' | 'packaging' | 'equipment' | 'other';
 export type MaterialUnit = 'kg' | 'unit' | 'm' | 'm2' | 'm3' | 'l' | 'ml' | 'g';
 export type CertificationType = 'quality' | 'safety' | 'environmental' | 'technical' | 'other';
 export type TestStatus = 'pending' | 'in_progress' | 'passed' | 'failed';
@@ -77,19 +77,63 @@ export interface MaterialInventoryMovement {
   location: string;
 }
 
+export interface MaterialCategory {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+  type: MaterialCategoryType;
+  parentId?: string;
+  path: string[];
+  level: number;
+  attributes: {
+    requiresTest?: boolean;
+    requiresCertification?: boolean;
+    isHazardous?: boolean;
+    storageConditions?: string[];
+    customFields?: Record<string, {
+      type: 'text' | 'number' | 'boolean' | 'date' | 'select';
+      required: boolean;
+      options?: string[];
+      unit?: string;
+      validation?: {
+        min?: number;
+        max?: number;
+        pattern?: string;
+      };
+    }>;
+  };
+  metadata?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Material {
   id: string;
   code: string;
   name: string;
   description: string;
+  categoryId: string;
   category: MaterialCategory;
+  categoryPath?: MaterialCategory[];
   status: MaterialStatus;
   unit: MaterialUnit;
+  cost: number;
+  price?: number;
   minStock: number;
   maxStock: number;
   currentStock: number;
   reorderPoint: number;
   leadTime: number;
+  quantidade?: number;
+  historico?: Array<{
+    id: string;
+    tipo: 'entrada' | 'saida' | 'ajuste' | 'teste';
+    quantidade: number;
+    data: string;
+    responsavel: string;
+    observacao?: string;
+  }>;
   specifications: {
     technical: Record<string, string>;
     quality: Record<string, string>;
@@ -139,7 +183,7 @@ export interface Material {
 
 export interface MaterialFilter {
   search?: string;
-  category?: MaterialCategory;
+  category?: MaterialCategoryType;
   status?: MaterialStatus;
   supplier?: string;
   certification?: CertificationType;
@@ -149,9 +193,14 @@ export interface MaterialFilter {
   pendingTests?: boolean;
 }
 
+export interface MaterialWithCategory extends Material {
+  category: MaterialCategory;
+  categoryPath: MaterialCategory[];
+}
+
 export interface MaterialStats {
   total: number;
-  byCategory: Record<MaterialCategory, number>;
+  byCategory: Record<MaterialCategoryType, number>;
   byStatus: Record<MaterialStatus, number>;
   lowStock: number;
   withPendingTests: number;
@@ -159,6 +208,16 @@ export interface MaterialStats {
   totalValue: number;
   stockTurnover: number;
   averageLeadTime: number;
+  inStock: number;
+  turnoverRate: number;
+  porCategoria: Record<string, number>;
+  porStatus: Record<string, number>;
+  quantidadeTotal: number;
+  ultimasMovimentacoes: Array<{
+    data: string;
+    tipo: string;
+    quantidade: number;
+  }>;
   topSuppliers: {
     id: string;
     name: string;
@@ -177,4 +236,14 @@ export interface MaterialStats {
     pendingTests: number;
     rejectionRate: number;
   };
+  categoryBreakdown: {
+    category: MaterialCategoryType;
+    count: number;
+    value: number;
+    stockHealth: {
+      optimal: number;
+      low: number;
+      excess: number;
+    };
+  }[];
 } 

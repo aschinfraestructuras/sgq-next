@@ -53,6 +53,44 @@ export const translations: Translations = {
     logout: 'Sair',
     email: 'Email',
     password: 'Senha',
+
+    general: {
+      save: 'Salvar',
+      cancel: 'Cancelar',
+      delete: 'Excluir',
+      edit: 'Editar',
+      view: 'Visualizar',
+      loading: 'Carregando...',
+      noData: 'Nenhum dado encontrado',
+      search: 'Buscar',
+      filter: 'Filtrar',
+      actions: 'Ações'
+    },
+    materials: {
+      title: 'Materiais',
+      add: 'Adicionar Material',
+      edit: 'Editar Material',
+      delete: 'Excluir Material',
+      code: 'Código',
+      name: 'Nome',
+      description: 'Descrição',
+      category: 'Categoria',
+      supplier: 'Fornecedor',
+      quantity: 'Quantidade',
+      unit: 'Unidade',
+      price: 'Preço',
+      totalValue: 'Valor Total',
+      minQuantity: 'Quantidade Mínima',
+      maxQuantity: 'Quantidade Máxima',
+      location: 'Localização',
+      status: 'Status',
+      createdAt: 'Criado em',
+      updatedAt: 'Atualizado em',
+      inStock: 'Em Estoque',
+      lowStock: 'Estoque Baixo',
+      outOfStock: 'Sem Estoque',
+      turnoverRate: 'Taxa de Giro'
+    }
   },
   en: {
     // Menu items
@@ -102,5 +140,43 @@ export const translations: Translations = {
     logout: 'Logout',
     email: 'Email',
     password: 'Password',
+
+    general: {
+      save: 'Save',
+      cancel: 'Cancel',
+      delete: 'Delete',
+      edit: 'Edit',
+      view: 'View',
+      loading: 'Loading...',
+      noData: 'No data found',
+      search: 'Search',
+      filter: 'Filter',
+      actions: 'Actions'
+    },
+    materials: {
+      title: 'Materials',
+      add: 'Add Material',
+      edit: 'Edit Material',
+      delete: 'Delete Material',
+      code: 'Code',
+      name: 'Name',
+      description: 'Description',
+      category: 'Category',
+      supplier: 'Supplier',
+      quantity: 'Quantity',
+      unit: 'Unit',
+      price: 'Price',
+      totalValue: 'Total Value',
+      minQuantity: 'Minimum Quantity',
+      maxQuantity: 'Maximum Quantity',
+      location: 'Location',
+      status: 'Status',
+      createdAt: 'Created at',
+      updatedAt: 'Updated at',
+      inStock: 'In Stock',
+      lowStock: 'Low Stock',
+      outOfStock: 'Out of Stock',
+      turnoverRate: 'Turnover Rate'
+    }
   },
 }; 
