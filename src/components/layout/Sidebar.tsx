@@ -14,6 +14,8 @@ import {
   ChartBarIcon,
   BuildingOfficeIcon,
   DocumentMagnifyingGlassIcon,
+  CubeIcon,
+  BuildingStorefrontIcon,
 } from '@heroicons/react/24/outline';
 import { useAppState } from '@/hooks/useAppState';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,6 +38,8 @@ const navigation = [
   },
   { name: 'Ensaios', href: '/ensaios', icon: BeakerIcon },
   { name: 'Auditorias', href: '/auditorias', icon: ClipboardDocumentCheckIcon },
+  { name: 'Materiais', href: '/materiais', icon: CubeIcon },
+  { name: 'Fornecedores', href: '/fornecedores', icon: BuildingStorefrontIcon },
   { name: 'Equipe', href: '/equipe', icon: UserGroupIcon },
   { name: 'Departamentos', href: '/departamentos', icon: BuildingOfficeIcon },
   { name: 'Relatórios', href: '/relatorios', icon: ChartBarIcon },
