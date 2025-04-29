@@ -21,39 +21,16 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Download, Close } from '@mui/icons-material';
-
-interface MaterialTest {
-  id: string;
-  technician: string;
-  date: string | Date;
-  title: string;
-  status: TestStatus;
-  results: TestResult[];
-  notes?: string;
-  attachments?: Attachment[];
-}
-
-interface TestResult {
-  parameter: string;
-  value: number | string;
-  unit: string;
-}
-
-interface Attachment {
-  name: string;
-  url: string;
-}
-
-type TestStatus = 'pending' | 'in_progress' | 'passed' | 'failed';
+import type { MaterialTest } from '@/types/materials';
 
 interface MaterialTestDetailsProps {
   test: MaterialTest;
   open: boolean;
   onClose: () => void;
-  onDownload?: (attachment: Attachment) => void;
+  onDownload?: (attachment: { name: string; url: string }) => void;
 }
 
-const getStatusColor = (status: TestStatus): 'default' | 'primary' | 'success' | 'error' => {
+const getStatusColor = (status: MaterialTest['status']): 'default' | 'primary' | 'success' | 'error' => {
   switch (status) {
     case 'pending':
       return 'default';
@@ -103,10 +80,10 @@ export default function MaterialTestDetails({ test, open, onClose, onDownload }:
                     <CalendarIcon width={24} />
                     <Box>
                       <Typography variant="caption" color="text.secondary">
-                        Data do Teste
+                        Data Prevista
                       </Typography>
                       <Typography>
-                        {format(new Date(test.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                        {format(new Date(test.dueDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                       </Typography>
                     </Box>
                   </Box>
@@ -116,9 +93,9 @@ export default function MaterialTestDetails({ test, open, onClose, onDownload }:
                     <ClipboardDocumentListIcon width={24} />
                     <Box>
                       <Typography variant="caption" color="text.secondary">
-                        Título
+                        Tipo
                       </Typography>
-                      <Typography>{test.title}</Typography>
+                      <Typography>{test.type}</Typography>
                     </Box>
                   </Box>
                 </Box>
@@ -166,10 +143,10 @@ export default function MaterialTestDetails({ test, open, onClose, onDownload }:
                       <Button
                         variant="outlined"
                         startIcon={<Download />}
-                        onClick={() => onDownload?.(attachment)}
+                        onClick={() => onDownload?.({ name: attachment, url: attachment })}
                         fullWidth
                       >
-                        {attachment.name}
+                        {attachment}
                       </Button>
                     </Box>
                   ))}

@@ -202,7 +202,7 @@ export default function MaterialTests({
           open={isFormOpen}
           onClose={handleCloseForm}
           onSubmit={handleSubmit}
-          initialData={selectedTest}
+          initialData={selectedTest ?? undefined}
         />
       )}
 
