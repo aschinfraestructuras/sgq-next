@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Language } from '../i18n/translations';
+import { Language } from '../types/i18n';
 
 export const useLanguage = () => {
   const [language, setLanguage] = useState<Language>('pt');

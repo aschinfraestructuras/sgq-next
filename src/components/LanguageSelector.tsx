@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { LanguageIcon } from '@heroicons/react/24/outline';
-import type { Language } from '@/hooks/useTranslation';
+import type { Language } from '@/types/i18n';
 
 const languages: { code: Language; label: string; flag: string }[] = [
   { code: 'pt', label: 'Português', flag: '🇧🇷' },
