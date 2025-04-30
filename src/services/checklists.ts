@@ -3,15 +3,13 @@ import {
   doc,
   getDoc,
   getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
   query,
   where,
   orderBy,
   Timestamp,
   writeBatch,
 } from 'firebase/firestore';
+import { FirebaseError } from 'firebase/app';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { ChecklistTemplate, ChecklistExecution } from '@/types/checklists';
@@ -24,6 +22,8 @@ const EXECUTIONS_COLLECTION = 'checklist_executions';
 export async function createTemplate(data: Partial<ChecklistTemplate>): Promise<string> {
   try {
     const { user } = useAuth();
+    if (!user?.id) throw new Error('Usuário não autenticado');
+
     const batch = writeBatch(db);
     const docRef = doc(collection(db, TEMPLATES_COLLECTION));
     const timestamp = Timestamp.now();
@@ -32,8 +32,8 @@ export async function createTemplate(data: Partial<ChecklistTemplate>): Promise<
       ...data,
       createdAt: timestamp,
       updatedAt: timestamp,
-      createdBy: user?.id,
-      updatedBy: user?.id,
+      createdBy: user.id,
+      updatedBy: user.id,
       status: 'draft',
     };
 
@@ -47,14 +47,14 @@ export async function createTemplate(data: Partial<ChecklistTemplate>): Promise<
       action: 'create',
       changes: { new: templateData },
       timestamp,
-      performedBy: user?.id,
+      performedBy: user.id,
     });
 
     await batch.commit();
     return docRef.id;
   } catch (error) {
     console.error('Error creating checklist template:', error);
-    throw handleFirebaseError(error);
+    throw handleFirebaseError(error as FirebaseError | Error);
   }
 }
 
@@ -64,6 +64,8 @@ export async function startChecklistExecution(
 ): Promise<string> {
   try {
     const { user } = useAuth();
+    if (!user?.id) throw new Error('Usuário não autenticado');
+
     const batch = writeBatch(db);
     
     // Get template
@@ -98,8 +100,8 @@ export async function startChecklistExecution(
       },
       createdAt: timestamp,
       updatedAt: timestamp,
-      createdBy: user?.id,
-      updatedBy: user?.id,
+      createdBy: user.id,
+      updatedBy: user.id,
     };
 
     batch.set(executionRef, executionData);
@@ -112,14 +114,14 @@ export async function startChecklistExecution(
       action: 'create',
       changes: { new: executionData },
       timestamp,
-      performedBy: user?.id,
+      performedBy: user.id,
     });
 
     await batch.commit();
     return executionRef.id;
   } catch (error) {
     console.error('Error starting checklist execution:', error);
-    throw handleFirebaseError(error);
+    throw handleFirebaseError(error as FirebaseError | Error);
   }
 }
 
@@ -228,7 +230,7 @@ export async function updateChecklistItem(
     await batch.commit();
   } catch (error) {
     console.error('Error updating checklist item:', error);
-    throw handleFirebaseError(error);
+    throw handleFirebaseError(error as FirebaseError | Error);
   }
 }
 
@@ -241,6 +243,8 @@ export async function completeChecklist(
 ): Promise<void> {
   try {
     const { user } = useAuth();
+    if (!user?.id) throw new Error('Usuário não autenticado');
+
     const batch = writeBatch(db);
     const timestamp = Timestamp.now();
 
@@ -259,11 +263,12 @@ export async function completeChecklist(
           type: file.type,
           size: file.size,
           uploadedAt: timestamp,
-          uploadedBy: user?.id,
+          uploadedBy: user.id,
         });
       }
     }
 
+    // Get current execution
     const executionRef = doc(db, EXECUTIONS_COLLECTION, executionId);
     const executionDoc = await getDoc(executionRef);
     if (!executionDoc.exists()) {
@@ -272,36 +277,15 @@ export async function completeChecklist(
 
     const execution = executionDoc.data() as ChecklistExecution;
     
-    // Verify if all items are completed
-    const hasIncompleteItems = execution.sections.some(section =>
-      section.items.some(item => item.status === 'pending')
-    );
-
-    if (hasIncompleteItems) {
-      throw new Error('Existem itens pendentes no checklist');
-    }
-
-    // Calculate metrics
-    const startTime = execution.schedule.actualStart?.toDate() || execution.createdAt.toDate();
-    const endTime = timestamp.toDate();
-    const timeToComplete = Math.round((endTime.getTime() - startTime.getTime()) / 1000 / 60); // em minutos
-
-    const totalItems = execution.progress.total;
-    const itemsPerHour = totalItems / (timeToComplete / 60);
-    const nonConformityRate = execution.progress.nonCompliant / totalItems;
-
     // Update execution
     batch.update(executionRef, {
       status: 'completed',
-      'schedule.actualEnd': timestamp,
+      observations: data.observations,
       attachments: uploadedAttachments,
-      metrics: {
-        timeToComplete,
-        itemsPerHour,
-        nonConformityRate,
-      },
+      completedAt: timestamp,
+      completedBy: user.id,
       updatedAt: timestamp,
-      updatedBy: user?.id,
+      updatedBy: user.id,
     });
 
     // Create audit trail
@@ -312,16 +296,22 @@ export async function completeChecklist(
       action: 'complete',
       changes: {
         old: { status: execution.status },
-        new: { status: 'completed' },
+        new: { 
+          status: 'completed',
+          observations: data.observations,
+          attachments: uploadedAttachments,
+          completedAt: timestamp,
+          completedBy: user.id,
+        },
       },
       timestamp,
-      performedBy: user?.id,
+      performedBy: user.id,
     });
 
     await batch.commit();
   } catch (error) {
     console.error('Error completing checklist:', error);
-    throw handleFirebaseError(error);
+    throw handleFirebaseError(error as FirebaseError | Error);
   }
 }
 
@@ -361,6 +351,6 @@ export async function getChecklistExecutions(filters?: {
     })) as ChecklistExecution[];
   } catch (error) {
     console.error('Error getting checklist executions:', error);
-    throw handleFirebaseError(error);
+    throw handleFirebaseError(error as FirebaseError | Error);
   }
 } 

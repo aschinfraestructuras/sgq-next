@@ -14,12 +14,12 @@ import {
   DocumentData,
   CollectionReference,
   Query,
+  writeBatch,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { db } from '@/lib/firebase';
 import type { 
   Material, 
   MaterialFilter, 
-  MaterialStats, 
   MaterialCategory,
   MaterialCategoryType,
   MaterialStatus
@@ -28,96 +28,150 @@ import { getCategory, getCategoryHierarchy } from './materialCategories';
 
 const COLLECTION = 'materials';
 
-export async function getMaterials(filter?: MaterialFilter): Promise<Material[]> {
+export const getMaterials = async (filter?: MaterialFilter): Promise<Material[]> => {
   try {
-    let materialsQuery: Query<DocumentData> = collection(db, COLLECTION);
+    const materialsRef = collection(db, COLLECTION);
+    let q = query(materialsRef);
 
     if (filter) {
       if (filter.search) {
-        materialsQuery = query(materialsQuery, 
-          where('name', '>=', filter.search), 
-          where('name', '<=', filter.search + '\uf8ff')
-        );
+        q = query(q, where('name', '>=', filter.search), where('name', '<=', filter.search + '\uf8ff'));
       }
       if (filter.category) {
-        materialsQuery = query(materialsQuery, where('type', '==', filter.category));
+        q = query(q, where('categoryId', '==', filter.category));
       }
       if (filter.status) {
-        materialsQuery = query(materialsQuery, where('status', '==', filter.status));
+        q = query(q, where('status', '==', filter.status));
       }
       if (filter.supplier) {
-        materialsQuery = query(materialsQuery, where('suppliers', 'array-contains', { name: filter.supplier }));
+        q = query(q, where('suppliers', 'array-contains', filter.supplier));
       }
       if (filter.hasLowStock) {
-        materialsQuery = query(materialsQuery, where('currentStock', '<=', 'reorderPoint'));
+        q = query(q, where('currentStock', '<=', 'reorderPoint'));
       }
       if (filter.location) {
-        materialsQuery = query(materialsQuery, where('inventory.locations', 'array-contains', { name: filter.location }));
+        q = query(q, where('location', '==', filter.location));
       }
     }
 
-    const querySnapshot = await getDocs(materialsQuery);
-    const materials = await Promise.all(querySnapshot.docs.map(async doc => {
-      const data = doc.data();
-      const categoryHierarchy = await getCategoryHierarchy(data.categoryId);
-      
-      return {
-        id: doc.id,
-        ...data,
-        category: categoryHierarchy[categoryHierarchy.length - 1],
-        categoryPath: categoryHierarchy
-      } as Material;
-    }));
-
-    return materials;
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Material[];
   } catch (error) {
-    console.error('Error getting materials:', error);
+    console.error('Error fetching materials:', error);
     throw error;
   }
-}
+};
 
-export async function getMaterial(id: string): Promise<Material> {
-  const docRef = doc(db, COLLECTION, id);
-  const docSnap = await getDoc(docRef);
-  
-  if (!docSnap.exists()) {
-    throw new Error('Material not found');
+export const getMaterial = async (id: string): Promise<Material | null> => {
+  try {
+    const materialRef = doc(db, COLLECTION, id);
+    const materialDoc = await getDoc(materialRef);
+    
+    if (!materialDoc.exists()) {
+      return null;
+    }
+
+    return {
+      id: materialDoc.id,
+      ...materialDoc.data()
+    } as Material;
+  } catch (error) {
+    console.error('Error fetching material:', error);
+    throw error;
   }
+};
 
-  return {
-    id: docSnap.id,
-    ...docSnap.data()
-  } as Material;
+export const createMaterial = async (material: Omit<Material, 'id'>): Promise<Material> => {
+  try {
+    const materialsRef = collection(db, COLLECTION);
+    const docRef = await addDoc(materialsRef, {
+      ...material,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    return {
+      id: docRef.id,
+      ...material
+    } as Material;
+  } catch (error) {
+    console.error('Error creating material:', error);
+    throw error;
+  }
+};
+
+export const updateMaterial = async (id: string, material: Partial<Material>): Promise<void> => {
+  try {
+    const materialRef = doc(db, COLLECTION, id);
+    await updateDoc(materialRef, {
+      ...material,
+      updatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error updating material:', error);
+    throw error;
+  }
+};
+
+export const deleteMaterial = async (id: string): Promise<void> => {
+  try {
+    const materialRef = doc(db, COLLECTION, id);
+    await deleteDoc(materialRef);
+  } catch (error) {
+    console.error('Error deleting material:', error);
+    throw error;
+  }
+};
+
+interface CategoryBreakdown {
+  category: string;
+  count: number;
+  value: number;
+  percentage: number;
 }
 
-export async function createMaterial(data: Omit<Material, 'id'>): Promise<string> {
-  const docRef = await addDoc(collection(db, COLLECTION), {
-    ...data,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  });
-  return docRef.id;
+interface MaterialStats {
+  total: number;
+  byCategory: Record<MaterialCategoryType, number>;
+  byStatus: Record<MaterialStatus, number>;
+  lowStock: number;
+  withPendingTests: number;
+  withExpiringCertifications: number;
+  totalValue: number;
+  stockTurnover: number;
+  averageLeadTime: number;
+  inStock: number;
+  turnoverRate: number;
+  porCategoria: Record<string, number>;
+  porStatus: Record<string, number>;
+  quantidadeTotal: number;
+  ultimasMovimentacoes: any[];
+  topSuppliers: any[];
+  inventoryHealth: {
+    optimal: number;
+    low: number;
+    excess: number;
+    expired: number;
+  };
+  qualityMetrics: {
+    testsPassed: number;
+    testsFailed: number;
+    pendingTests: number;
+    rejectionRate: number;
+  };
+  categoryBreakdown: CategoryBreakdown[];
 }
 
-export async function updateMaterial(id: string, data: Partial<Material>): Promise<void> {
-  const docRef = doc(db, COLLECTION, id);
-  await updateDoc(docRef, {
-    ...data,
-    updatedAt: new Date().toISOString()
-  });
-}
-
-export async function deleteMaterial(id: string): Promise<void> {
-  const docRef = doc(db, COLLECTION, id);
-  await deleteDoc(docRef);
-}
-
-export async function getMaterialStats(): Promise<MaterialStats> {
+export const getMaterialStats = async (): Promise<MaterialStats> => {
   try {
     const materials = await getMaterials();
     
+    // Initialize stats object
     const stats: MaterialStats = {
-      total: materials.length,
+      total: 0,
       byCategory: {} as Record<MaterialCategoryType, number>,
       byStatus: {} as Record<MaterialStatus, number>,
       lowStock: 0,
@@ -148,92 +202,110 @@ export async function getMaterialStats(): Promise<MaterialStats> {
       categoryBreakdown: []
     };
 
+    // Calculate stats from materials
+    stats.total = materials.length;
+    
     materials.forEach(material => {
-      // Category breakdown
-      const categoryStats = stats.categoryBreakdown.find(c => c.category === material.category.type) || {
-        category: material.category.type,
-        count: 0,
-        value: 0,
-        stockHealth: {
-          optimal: 0,
-          low: 0,
-          excess: 0
-        }
-      };
-      
-      categoryStats.count++;
-      categoryStats.value += material.currentStock * material.cost;
-      
-      if (material.currentStock <= material.reorderPoint) {
-        categoryStats.stockHealth.low++;
-        stats.lowStock++;
-      } else if (material.currentStock >= material.maxStock) {
-        categoryStats.stockHealth.excess++;
-      } else {
-        categoryStats.stockHealth.optimal++;
-      }
-      
-      if (!stats.categoryBreakdown.find(c => c.category === material.category.type)) {
-        stats.categoryBreakdown.push(categoryStats);
-      }
+      if (!material) return;
 
-      // Status count
-      stats.byStatus[material.status] = (stats.byStatus[material.status] || 0) + 1;
-      stats.porStatus[material.status] = (stats.porStatus[material.status] || 0) + 1;
-
-      // Category count
-      stats.byCategory[material.category.type] = (stats.byCategory[material.category.type] || 0) + 1;
-      stats.porCategoria[material.category.type] = (stats.porCategoria[material.category.type] || 0) + 1;
-
-      // Total value and quantity
-      stats.totalValue += material.currentStock * material.cost;
-      stats.quantidadeTotal += material.currentStock;
+      // Calculate total value and stock metrics
+      const cost = material.cost || 0;
+      const currentStock = material.currentStock || 0;
+      const minStock = material.minStock || 0;
+      const maxStock = material.maxStock || 0;
       
-      if (material.currentStock > 0) {
+      stats.totalValue += cost * currentStock;
+      stats.quantidadeTotal += currentStock;
+      
+      if (currentStock > 0) {
         stats.inStock++;
       }
-
-      // Movement history
-      if (material.historico && material.historico.length > 0) {
-        stats.ultimasMovimentacoes.push(...material.historico
-          .slice(0, 5)
-          .map(h => ({
-            data: h.data,
-            tipo: h.tipo,
-            quantidade: h.quantidade
-          })));
+      
+      if (currentStock <= minStock) {
+        stats.lowStock++;
+        stats.inventoryHealth.low++;
+      } else if (currentStock >= maxStock) {
+        stats.inventoryHealth.excess++;
+      } else {
+        stats.inventoryHealth.optimal++;
       }
 
-      // Tests metrics
-      const pendingTests = material.tests.filter(t => t.status === 'pending').length;
-      if (pendingTests > 0) {
-        stats.withPendingTests++;
+      // Category stats
+      if (material.type) {
+        stats.byCategory[material.type] = (stats.byCategory[material.type] || 0) + 1;
+        stats.porCategoria[material.type] = (stats.porCategoria[material.type] || 0) + 1;
       }
-      stats.qualityMetrics.pendingTests += pendingTests;
-      stats.qualityMetrics.testsPassed += material.tests.filter(t => t.status === 'passed').length;
-      stats.qualityMetrics.testsFailed += material.tests.filter(t => t.status === 'failed').length;
+
+      // Status stats
+      if (material.status) {
+        stats.byStatus[material.status] = (stats.byStatus[material.status] || 0) + 1;
+        stats.porStatus[material.status] = (stats.porStatus[material.status] || 0) + 1;
+      }
+
+      // Test metrics
+      if (material.tests?.length) {
+        material.tests.forEach(test => {
+          if (test.status === 'passed') {
+            stats.qualityMetrics.testsPassed++;
+          } else if (test.status === 'failed') {
+            stats.qualityMetrics.testsFailed++;
+          } else {
+            stats.qualityMetrics.pendingTests++;
+            stats.withPendingTests++;
+          }
+        });
+      }
+
+      // Certification metrics
+      if (material.certifications?.some(cert => {
+        const expiryDate = new Date(cert.expiryDate);
+        const now = new Date();
+        const daysUntilExpiry = Math.floor((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        return daysUntilExpiry <= 30;
+      })) {
+        stats.withExpiringCertifications++;
+      }
+
+      // Lead time and turnover
+      if (material.leadTime) {
+        stats.averageLeadTime += material.leadTime;
+      }
     });
 
     // Calculate averages and rates
-    stats.turnoverRate = materials.reduce((acc, m) => acc + (m.currentStock > 0 ? 1 : 0), 0) / materials.length;
-    stats.averageLeadTime = materials.reduce((acc, m) => acc + m.leadTime, 0) / materials.length;
-    stats.qualityMetrics.rejectionRate = stats.qualityMetrics.testsFailed / 
-      (stats.qualityMetrics.testsPassed + stats.qualityMetrics.testsFailed);
+    if (stats.total > 0) {
+      stats.averageLeadTime /= stats.total;
+      stats.turnoverRate = stats.quantidadeTotal / stats.total;
+    }
 
-    // Sort and limit movements
-    stats.ultimasMovimentacoes.sort((a, b) => 
-      new Date(b.data).getTime() - new Date(a.data).getTime()
-    );
-    stats.ultimasMovimentacoes = stats.ultimasMovimentacoes.slice(0, 5);
+    // Calculate rejection rate
+    const totalTests = stats.qualityMetrics.testsPassed + stats.qualityMetrics.testsFailed;
+    stats.qualityMetrics.rejectionRate = totalTests > 0 ? stats.qualityMetrics.testsFailed / totalTests : 0;
+
+    // Process category breakdown
+    Object.entries(stats.porCategoria).forEach(([category, count]) => {
+      const materialsInCategory = materials.filter(m => m?.type === category);
+      const value = materialsInCategory.reduce((sum, m) => sum + ((m?.cost || 0) * (m?.currentStock || 0)), 0);
+      
+      stats.categoryBreakdown.push({
+        category,
+        count,
+        value,
+        percentage: (count / stats.total) * 100
+      });
+    });
+
+    // Sort category breakdown by value
+    stats.categoryBreakdown.sort((a, b) => b.value - a.value);
 
     return stats;
   } catch (error) {
-    console.error('Error getting material stats:', error);
+    console.error('Error calculating material stats:', error);
     throw error;
   }
-}
+};
 
-export async function addMaterialMovement(
+export const addMaterialMovement = async (
   materialId: string,
   movimento: {
     tipo: 'entrada' | 'saida' | 'ajuste' | 'teste';
@@ -241,30 +313,59 @@ export async function addMaterialMovement(
     responsavel: string;
     observacao?: string;
   }
-) {
+): Promise<void> => {
   try {
-    const material = await getMaterial(materialId);
-    const novaQuantidade = (material.quantidade || material.currentStock) + (
-      movimento.tipo === 'entrada' ? movimento.quantidade : 
-      movimento.tipo === 'saida' ? -movimento.quantidade :
-      movimento.quantidade
-    );
+    const materialRef = doc(db, COLLECTION, materialId);
+    const materialDoc = await getDoc(materialRef);
+    
+    if (!materialDoc.exists()) {
+      throw new Error('Material não encontrado');
+    }
 
-    const novoHistorico = {
-      id: Math.random().toString(36).substr(2, 9),
-      data: new Date().toISOString(),
-      ...movimento
-    };
+    const material = materialDoc.data() as Material;
+    const currentStock = material.currentStock || 0;
+    let newStock = currentStock;
 
-    await updateMaterial(materialId, {
-      currentStock: novaQuantidade,
-      quantidade: novaQuantidade,
-      historico: [...(material.historico || []), novoHistorico]
+    switch (movimento.tipo) {
+      case 'entrada':
+        newStock += movimento.quantidade;
+        break;
+      case 'saida':
+        newStock -= movimento.quantidade;
+        break;
+      case 'ajuste':
+        newStock = movimento.quantidade;
+        break;
+      case 'teste':
+        // Não altera o estoque
+        break;
+    }
+
+    if (newStock < 0) {
+      throw new Error('Estoque não pode ser negativo');
+    }
+
+    const batch = writeBatch(db);
+    const timestamp = Timestamp.now();
+
+    // Update material stock
+    batch.update(materialRef, {
+      currentStock: newStock,
+      updatedAt: timestamp,
     });
 
-    return novoHistorico;
+    // Add movement to history
+    const historyRef = collection(db, COLLECTION, materialId, 'history');
+    batch.set(doc(historyRef), {
+      ...movimento,
+      timestamp,
+      previousStock: currentStock,
+      newStock,
+    });
+
+    await batch.commit();
   } catch (error) {
     console.error('Error adding material movement:', error);
     throw error;
   }
-} 
+}; 

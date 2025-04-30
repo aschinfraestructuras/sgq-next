@@ -12,6 +12,7 @@ import {
   Timestamp,
   writeBatch,
 } from 'firebase/firestore';
+import { FirebaseError } from 'firebase/app';
 import { db, storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Document, DocumentTemplate, DocumentVersion } from '@/types/documentation';
@@ -21,9 +22,19 @@ import { useAuth } from '@/hooks/useAuth';
 const COLLECTION = 'documents';
 const TEMPLATES_COLLECTION = 'document_templates';
 
+const handleError = (error: unknown, message: string) => {
+  console.error(message, error);
+  if (error instanceof Error || error instanceof FirebaseError) {
+    throw handleFirebaseError(error);
+  }
+  throw new Error(`Erro desconhecido: ${message}`);
+};
+
 export async function createDocument(data: Partial<Document>): Promise<string> {
   try {
     const { user } = useAuth();
+    if (!user?.id) throw new Error('Usuário não autenticado');
+
     const batch = writeBatch(db);
     const docRef = doc(collection(db, COLLECTION));
     const timestamp = Timestamp.now();
@@ -32,8 +43,8 @@ export async function createDocument(data: Partial<Document>): Promise<string> {
       ...data,
       createdAt: timestamp,
       updatedAt: timestamp,
-      createdBy: user?.id,
-      updatedBy: user?.id,
+      createdBy: user.id,
+      updatedBy: user.id,
       status: 'draft',
       version: 1,
     };
@@ -48,20 +59,22 @@ export async function createDocument(data: Partial<Document>): Promise<string> {
       action: 'create',
       changes: { new: documentData },
       timestamp,
-      performedBy: user?.id,
+      performedBy: user.id,
     });
 
     await batch.commit();
     return docRef.id;
   } catch (error) {
-    console.error('Error creating document:', error);
-    throw handleFirebaseError(error);
+    handleError(error, 'Error creating document');
+    return '';
   }
 }
 
 export async function updateDocument(id: string, data: Partial<Document>): Promise<void> {
   try {
     const { user } = useAuth();
+    if (!user?.id) throw new Error('Usuário não autenticado');
+
     const batch = writeBatch(db);
     const docRef = doc(db, COLLECTION, id);
     const timestamp = Timestamp.now();
@@ -74,7 +87,7 @@ export async function updateDocument(id: string, data: Partial<Document>): Promi
     const updateData = {
       ...data,
       updatedAt: timestamp,
-      updatedBy: user?.id,
+      updatedBy: user.id,
     };
 
     batch.update(docRef, updateData);
@@ -90,13 +103,12 @@ export async function updateDocument(id: string, data: Partial<Document>): Promi
         new: updateData,
       },
       timestamp,
-      performedBy: user?.id,
+      performedBy: user.id,
     });
 
     await batch.commit();
   } catch (error) {
-    console.error('Error updating document:', error);
-    throw handleFirebaseError(error);
+    handleError(error, 'Error updating document');
   }
 }
 
@@ -106,6 +118,8 @@ export async function addDocumentVersion(
 ): Promise<void> {
   try {
     const { user } = useAuth();
+    if (!user?.id) throw new Error('Usuário não autenticado');
+
     const batch = writeBatch(db);
     const docRef = doc(db, COLLECTION, documentId);
     const timestamp = Timestamp.now();
@@ -119,14 +133,14 @@ export async function addDocumentVersion(
     const newVersion: DocumentVersion = {
       ...version,
       createdAt: timestamp,
-      createdBy: user?.id,
+      createdBy: user.id,
     };
 
     batch.update(docRef, {
       versions: [...document.versions, newVersion],
       currentVersion: version.version,
       updatedAt: timestamp,
-      updatedBy: user?.id,
+      updatedBy: user.id,
     });
 
     // Create audit trail
@@ -137,21 +151,22 @@ export async function addDocumentVersion(
       action: 'create',
       changes: { new: newVersion },
       timestamp,
-      performedBy: user?.id,
+      performedBy: user.id,
     });
 
     await batch.commit();
   } catch (error) {
-    console.error('Error adding document version:', error);
-    throw handleFirebaseError(error);
+    handleError(error, 'Error adding document version');
   }
 }
 
 export async function uploadDocumentFile(file: File): Promise<string> {
   try {
     const { user } = useAuth();
+    if (!user?.id) throw new Error('Usuário não autenticado');
+
     const timestamp = Date.now();
-    const filename = `documents/${user?.id}/${timestamp}_${file.name}`;
+    const filename = `documents/${user.id}/${timestamp}_${file.name}`;
     const storageRef = ref(storage, filename);
     
     await uploadBytes(storageRef, file);
@@ -159,8 +174,8 @@ export async function uploadDocumentFile(file: File): Promise<string> {
     
     return url;
   } catch (error) {
-    console.error('Error uploading document file:', error);
-    throw handleFirebaseError(error);
+    handleError(error, 'Error uploading document file');
+    return '';
   }
 }
 
@@ -203,8 +218,8 @@ export async function getDocuments(filters?: {
       ...doc.data()
     })) as Document[];
   } catch (error) {
-    console.error('Error getting documents:', error);
-    throw handleFirebaseError(error);
+    handleError(error, 'Error getting documents');
+    return [];
   }
 }
 
@@ -218,8 +233,8 @@ export async function getDocumentTemplates(): Promise<DocumentTemplate[]> {
       ...doc.data()
     })) as DocumentTemplate[];
   } catch (error) {
-    console.error('Error getting document templates:', error);
-    throw handleFirebaseError(error);
+    handleError(error, 'Error getting document templates');
+    return [];
   }
 }
 
@@ -246,7 +261,7 @@ export async function createDocumentFromTemplate(
 
     return await createDocument(documentData);
   } catch (error) {
-    console.error('Error creating document from template:', error);
-    throw handleFirebaseError(error);
+    handleError(error, 'Error creating document from template');
+    return '';
   }
 } 

@@ -14,11 +14,8 @@ import {
   BeakerIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  ClockIcon,
-  UserIcon,
-  BuildingOfficeIcon,
 } from '@heroicons/react/24/outline';
-import type { Material, MaterialBatch } from '@/types/materials';
+import type { Material } from '@/types/materials';
 import { useTranslation } from '@/hooks/useTranslation';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';

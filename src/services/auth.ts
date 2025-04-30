@@ -10,16 +10,35 @@ import {
 import type { User } from '@/types';
 import { FirebaseError } from 'firebase/app';
 
-const mapFirebaseUserToUser = (firebaseUser: FirebaseUser): User => ({
-  id: firebaseUser.uid,
-  email: firebaseUser.email || '',
-  name: firebaseUser.displayName || '',
-  role: 'user',
-  active: true,
-  createdAt: new Date(firebaseUser.metadata.creationTime || ''),
-  lastLogin: new Date(firebaseUser.metadata.lastSignInTime || ''),
-  avatar: firebaseUser.photoURL || undefined
-});
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+const validatePassword = (password: string): boolean => {
+  if (password.length < PASSWORD_MIN_LENGTH) {
+    throw new Error('A senha deve ter pelo menos 8 caracteres');
+  }
+  if (!PASSWORD_REGEX.test(password)) {
+    throw new Error('A senha deve conter pelo menos uma letra maiúscula, uma minúscula, um número e um caractere especial');
+  }
+  return true;
+};
+
+const mapFirebaseUserToUser = (firebaseUser: FirebaseUser): User => {
+  if (!firebaseUser.email) {
+    throw new Error('Usuário não possui email');
+  }
+
+  return {
+    id: firebaseUser.uid,
+    email: firebaseUser.email,
+    name: firebaseUser.displayName || '',
+    role: 'user',
+    active: true,
+    createdAt: new Date(firebaseUser.metadata.creationTime || Date.now()),
+    lastLogin: new Date(firebaseUser.metadata.lastSignInTime || Date.now()),
+    avatar: firebaseUser.photoURL || undefined
+  };
+};
 
 export function getCurrentUser(): FirebaseUser | null {
   return auth.currentUser;
@@ -31,22 +50,42 @@ export async function login(email: string, password: string): Promise<User> {
     return mapFirebaseUserToUser(userCredential.user);
   } catch (error) {
     if (error instanceof FirebaseError) {
-      throw new Error(error.message);
+      switch (error.code) {
+        case 'auth/user-not-found':
+          throw new Error('Usuário não encontrado');
+        case 'auth/wrong-password':
+          throw new Error('Senha incorreta');
+        case 'auth/too-many-requests':
+          throw new Error('Muitas tentativas de login. Tente novamente mais tarde');
+        default:
+          throw new Error('Erro ao fazer login: ' + error.message);
+      }
     }
-    throw new Error('Failed to login');
+    throw new Error('Falha ao fazer login');
   }
 }
 
 export async function register(email: string, password: string, name: string): Promise<User> {
   try {
+    validatePassword(password);
+
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
     return mapFirebaseUserToUser(userCredential.user);
   } catch (error) {
     if (error instanceof FirebaseError) {
-      throw new Error(error.message);
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          throw new Error('Email já está em uso');
+        case 'auth/invalid-email':
+          throw new Error('Email inválido');
+        case 'auth/operation-not-allowed':
+          throw new Error('Operação não permitida');
+        default:
+          throw new Error('Erro ao registrar: ' + error.message);
+      }
     }
-    throw new Error('Failed to register');
+    throw error;
   }
 }
 
@@ -55,9 +94,9 @@ export async function logout(): Promise<void> {
     await signOut(auth);
   } catch (error) {
     if (error instanceof FirebaseError) {
-      throw new Error(error.message);
+      throw new Error('Erro ao fazer logout: ' + error.message);
     }
-    throw new Error('Failed to logout');
+    throw new Error('Falha ao fazer logout');
   }
 }
 
@@ -65,7 +104,7 @@ export async function updateUserProfile(data: Partial<User>): Promise<User> {
   try {
     const currentUser = auth.currentUser;
     if (!currentUser) {
-      throw new Error('No user logged in');
+      throw new Error('Nenhum usuário logado');
     }
 
     await updateProfile(currentUser, {
@@ -76,9 +115,9 @@ export async function updateUserProfile(data: Partial<User>): Promise<User> {
     return mapFirebaseUserToUser(currentUser);
   } catch (error) {
     if (error instanceof FirebaseError) {
-      throw new Error(error.message);
+      throw new Error('Erro ao atualizar perfil: ' + error.message);
     }
-    throw new Error('Failed to update profile');
+    throw new Error('Falha ao atualizar perfil');
   }
 }
 
@@ -87,8 +126,15 @@ export async function resetPassword(email: string): Promise<void> {
     await sendPasswordResetEmail(auth, email);
   } catch (error) {
     if (error instanceof FirebaseError) {
-      throw new Error(error.message);
+      switch (error.code) {
+        case 'auth/user-not-found':
+          throw new Error('Usuário não encontrado');
+        case 'auth/invalid-email':
+          throw new Error('Email inválido');
+        default:
+          throw new Error('Erro ao enviar email de redefinição: ' + error.message);
+      }
     }
-    throw new Error('Failed to send password reset email');
+    throw new Error('Falha ao enviar email de redefinição de senha');
   }
 } 

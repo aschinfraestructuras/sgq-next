@@ -35,6 +35,6 @@ export function formatFirestoreDate(date: Date): string {
   });
 }
 
-export function isFirebaseError(error: any): error is FirebaseError {
-  return error && typeof error === 'object' && 'code' in error;
+export function isFirebaseError(error: unknown): error is FirebaseError {
+  return error !== null && typeof error === 'object' && 'code' in error;
 } 
