@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from '@/hooks/useTranslation';
-import type { Material, MaterialCategory, MaterialStatus, MaterialUnit } from '@/types/materials';
+import type { Material, MaterialCategory, MaterialCategoryType, MaterialStatus, MaterialUnit, MaterialTestFormData, TestStatus } from '@/types/materials';
 import { getCategories } from '@/services/materialCategories';
 import {
   TagIcon,
@@ -25,6 +25,7 @@ interface MaterialFormProps {
 
 const statuses: MaterialStatus[] = ['active', 'inactive', 'pending', 'discontinued'];
 const units: MaterialUnit[] = ['unit', 'kg', 'g', 'l', 'ml', 'm', 'm2', 'm3'];
+const testStatuses: TestStatus[] = ['pending', 'passed', 'failed'];
 
 interface FormFieldProps {
   label: string;
@@ -58,58 +59,74 @@ const FormField: React.FC<FormFieldProps> = ({
   </div>
 );
 
+type FormData = z.infer<typeof materialSchema>;
+
 const materialSchema = z.object({
-  name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
+  code: z.string(),
+  name: z.string(),
   description: z.string().optional(),
-  type: z.string(),
+  type: z.enum(['raw', 'component', 'finished'] as const),
   categoryId: z.string(),
-  cost: z.number().min(0, 'Custo deve ser maior que zero'),
-  unit: z.string(),
-  currentStock: z.number().min(0, 'Estoque atual não pode ser negativo'),
-  minStock: z.number().min(0, 'Estoque mínimo não pode ser negativo'),
-  maxStock: z.number().min(0, 'Estoque máximo não pode ser negativo'),
-  reorderPoint: z.number().min(0, 'Ponto de pedido não pode ser negativo'),
-  leadTime: z.number().min(0, 'Tempo de entrega não pode ser negativo'),
+  cost: z.number(),
+  unit: z.enum(['unit', 'kg', 'g', 'l', 'ml', 'm', 'm2', 'm3'] as const),
+  currentStock: z.number(),
+  minStock: z.number(),
+  maxStock: z.number(),
+  reorderPoint: z.number(),
+  leadTime: z.number(),
   suppliers: z.array(z.object({
     name: z.string(),
     contact: z.string().optional(),
-    email: z.string().email().optional(),
+    email: z.string().optional(),
     phone: z.string().optional()
   })),
   location: z.string(),
-  status: z.enum(['active', 'inactive', 'discontinued']),
+  status: z.enum(['active', 'inactive', 'discontinued', 'pending'] as const),
   specifications: z.record(z.string()).optional(),
-  certifications: z.array(z.object({
-    name: z.string(),
-    number: z.string(),
-    issueDate: z.string(),
-    expiryDate: z.string().optional()
-  })).optional(),
   tests: z.array(z.object({
+    type: z.string(),
     name: z.string(),
-    status: z.enum(['pending', 'passed', 'failed']),
-    date: z.string(),
-    result: z.string().optional()
+    description: z.string().optional(),
+    testStatus: z.enum(['pending', 'passed', 'failed'] as const),
+    results: z.array(z.object({
+      parameter: z.string(),
+      value: z.union([z.number(), z.string()]),
+      unit: z.string().optional(),
+      method: z.string().optional(),
+      specification: z.string().optional(),
+      result: z.enum(['pass', 'fail', 'pending'] as const),
+      notes: z.string().optional()
+    })),
+    notes: z.string().optional(),
+    attachments: z.array(z.string()).optional()
   })).optional()
 });
-
-type MaterialFormData = z.infer<typeof materialSchema>;
 
 export function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps) {
   const { t } = useTranslation();
   const [categories, setCategories] = useState<MaterialCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const { addMaterial } = useMaterials();
-  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting }, reset } = useForm<MaterialFormData>({
-    defaultValues: material || {},
+  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting }, reset } = useForm<FormData>({
+    defaultValues: material ? {
+      ...material,
+      code: material.id,
+      type: material.type as MaterialCategoryType,
+      unit: material.unit as MaterialUnit,
+      status: material.status as MaterialStatus,
+      tests: material.tests?.map(test => ({
+        ...test,
+        testStatus: test.testStatus as TestStatus
+      }))
+    } : {
+      status: 'active' as MaterialStatus,
+      type: 'raw' as MaterialCategoryType,
+      unit: 'unit' as MaterialUnit
+    },
     resolver: zodResolver(materialSchema)
   });
 
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getCategories();
@@ -120,16 +137,38 @@ export function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
-  const handleFormSubmit = async (data: MaterialFormData) => {
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
+  const handleFormSubmit = async (data: FormData) => {
     try {
-      await addMaterial({
+      const materialData: Omit<Material, 'id'> = {
         ...data,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        historico: []
-      });
+        historico: [],
+        suppliers: data.suppliers.map(s => ({
+          ...s,
+          id: Math.random().toString(36).substr(2, 9),
+          code: Math.random().toString(36).substr(2, 9),
+          rating: 0,
+          averageLeadTime: 0
+        })),
+        tests: data.tests?.map(t => ({
+          ...t,
+          id: Math.random().toString(36).substr(2, 9),
+          results: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          createdBy: 'system',
+          updatedBy: 'system',
+          attachments: []
+        }))
+      };
+      await addMaterial(materialData);
       toast.success(t('materials.form.success'));
       reset();
     } catch (error) {
@@ -139,6 +178,7 @@ export function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps
   };
 
   const selectedCategory = watch('categoryId');
+  const category = categories.find(c => c.id === selectedCategory);
   const minStock = watch('minStock') || 0;
   const maxStock = watch('maxStock') || 0;
 
@@ -239,9 +279,9 @@ export function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps
             <Autocomplete
               options={categories}
               getOptionLabel={(option) => option.name}
-              value={selectedCategory || null}
+              value={category}
               onChange={(_, newValue) => {
-                setValue('categoryId', newValue || undefined);
+                setValue('categoryId', newValue?.id || '');
               }}
               renderInput={(params) => (
                 <TextField
@@ -255,7 +295,7 @@ export function MaterialForm({ material, onSubmit, onCancel }: MaterialFormProps
                 <li {...props}>
                   <div className="flex items-center space-x-2">
                     <span>{option.name}</span>
-                    {option.attributes.isHazardous && (
+                    {option.type === 'raw' && (
                       <Tooltip title="Material Perigoso">
                         <ExclamationCircleIcon className="h-5 w-5 text-yellow-500" />
                       </Tooltip>

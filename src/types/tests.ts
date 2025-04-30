@@ -1,31 +1,25 @@
 import { BaseEntity, Attachment, Comment } from './quality-system';
 import { Timestamp } from 'firebase/firestore';
 
-export type TestType = 
-  | 'concrete_compression'
-  | 'concrete_slump'
-  | 'soil_compaction'
-  | 'steel_tension'
-  | 'waterproofing'
-  | 'mortar_compression'
-  | 'block_compression'
-  | 'granulometry'
-  | 'density'
+export type TestType =
+  | 'mechanical'
+  | 'chemical'
+  | 'physical'
+  | 'microbiological'
+  | 'sensory'
   | 'custom';
 
-export type TestStatus =
-  | 'scheduled'
-  | 'in_progress'
-  | 'waiting_results'
-  | 'completed'
-  | 'failed'
-  | 'cancelled';
+export type TestStatus = 'pending' | 'passed' | 'failed';
 
-export type TestResult = 
-  | 'pass'
-  | 'fail'
-  | 'partial'
-  | 'inconclusive';
+export type TestResult = {
+  parameter: string;
+  value: number | string;
+  unit?: string;
+  method?: string;
+  specification?: string;
+  result: 'pass' | 'fail' | 'pending';
+  notes?: string;
+};
 
 export interface TestParameter {
   name: string;
@@ -74,15 +68,29 @@ export interface Laboratory {
 }
 
 export interface Test extends BaseEntity {
-  code: string;
   type: TestType;
-  description: string;
-  status: TestStatus;
-  result?: TestResult;
-  location: TestLocation;
-  scheduledDate: Timestamp;
-  executionDate?: Timestamp;
-  completionDate?: Timestamp;
+  name: string;
+  description?: string;
+  testStatus: TestStatus;
+  results: TestResult[];
+  attachments: Attachment[];
+  comments: Comment[];
+  relatedTests?: string[];
+  method?: string;
+  equipment?: string;
+  standard?: string;
+  acceptanceCriteria?: string;
+  duration?: number;
+  cost?: number;
+  priority?: 'low' | 'medium' | 'high';
+  assignedTo?: string;
+  scheduledDate?: Date;
+  completedDate?: Date;
+  observations?: string;
+  recommendations?: string;
+  nextTestDate?: Date;
+  frequency?: number;
+  unit?: string;
   requirement: TestRequirement;
   parameters: TestParameter[];
   laboratory?: Laboratory;
@@ -91,21 +99,9 @@ export interface Test extends BaseEntity {
     name: string;
     registration: string;
   };
-  equipment?: {
-    id: string;
-    name: string;
-    calibrationDate: Timestamp;
-    nextCalibrationDate: Timestamp;
-  };
-  samples: {
-    id: string;
-    code: string;
-    collectionDate: Timestamp;
-    conditions: string;
-  }[];
-  attachments: Attachment[];
-  comments: Comment[];
-  relatedTests?: string[];
+  scheduledDateTimestamp?: Timestamp;
+  executionDateTimestamp?: Timestamp;
+  completionDateTimestamp?: Timestamp;
   nonConformityId?: string;
   approvals: {
     role: string;
@@ -120,7 +116,7 @@ export interface Test extends BaseEntity {
     sent: boolean;
     sentDate?: Timestamp;
   }[];
-  cost?: {
+  costTimestamp?: {
     predicted: number;
     actual: number;
     currency: string;

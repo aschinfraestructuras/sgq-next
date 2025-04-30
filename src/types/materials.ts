@@ -1,4 +1,4 @@
-export type MaterialStatus = 'active' | 'inactive' | 'discontinued';
+export type MaterialStatus = 'active' | 'inactive' | 'discontinued' | 'pending';
 export type MaterialCategoryType = 'raw' | 'component' | 'finished';
 export type MaterialUnit = 'unit' | 'kg' | 'g' | 'l' | 'ml' | 'm' | 'm2' | 'm3';
 export type CertificationType = 'quality' | 'safety' | 'environmental' | 'technical' | 'other';
@@ -8,10 +8,11 @@ export type BatchStatus = 'in_stock' | 'in_use' | 'consumed' | 'expired' | 'quar
 export interface TestResults {
   parameter: string;
   value: number | string;
-  min?: number;
-  max?: number;
   unit?: string;
-  status: TestStatus;
+  method?: string;
+  specification?: string;
+  result: 'pass' | 'fail' | 'pending';
+  notes?: string;
 }
 
 export interface MaterialCertification {
@@ -31,7 +32,7 @@ export interface MaterialTest {
   type: string;
   name: string;
   description?: string;
-  status: TestStatus;
+  testStatus: TestStatus;
   results: TestResults[];
   notes?: string;
   attachments?: string[];
@@ -102,7 +103,7 @@ export interface Material {
   categoryId: string;
   category?: MaterialCategory;
   cost: number;
-  unit: string;
+  unit: MaterialUnit;
   currentStock: number;
   minStock: number;
   maxStock: number;
